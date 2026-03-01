@@ -51,17 +51,17 @@ export function LoginForm({
               placeholder="Enter your password"
             />
             {/* {form.password && ( */}
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-2/4 -translate-y-1/2 text-neutral-700 dark:text-neutral-400"
-              >
-                {showPassword ? (
-                  <EyeOff className="size-4" />
-                ) : (
-                  <Eye className="size-4" />
-                )}
-              </button>
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-2/4 -translate-y-1/2 text-neutral-700 dark:text-neutral-400"
+            >
+              {showPassword ? (
+                <EyeOff className="size-4" />
+              ) : (
+                <Eye className="size-4" />
+              )}
+            </button>
             {/* )} */}
           </div>
         </Field>

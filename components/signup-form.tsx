@@ -1,24 +1,23 @@
-"use client"
+"use client";
 
-import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 import {
   Field,
   FieldDescription,
   FieldGroup,
   FieldLabel,
   FieldSeparator,
-} from "@/components/ui/field"
-import { Input } from "@/components/ui/input"
-import { Eye, EyeOff } from "lucide-react"
-import { useState } from "react"
-import Link from "next/link"
+} from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+import { Eye, EyeOff } from "lucide-react";
+import { useState } from "react";
+import Link from "next/link";
 
 export function SignupForm({
   className,
   ...props
 }: React.ComponentProps<"form">) {
-
   const [showPassword, setShowPassword] = useState(false);
 
   return (
@@ -48,17 +47,17 @@ export function SignupForm({
               placeholder="Enter your password"
             />
             {/* {form.password && ( */}
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-2/4 -translate-y-1/2 text-neutral-700 dark:text-neutral-400"
-              >
-                {showPassword ? (
-                  <EyeOff className="size-4" />
-                ) : (
-                  <Eye className="size-4" />
-                )}
-              </button>
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-2/4 -translate-y-1/2 text-neutral-700 dark:text-neutral-400"
+            >
+              {showPassword ? (
+                <EyeOff className="size-4" />
+              ) : (
+                <Eye className="size-4" />
+              )}
+            </button>
             {/* )} */}
           </div>
         </Field>
@@ -72,17 +71,17 @@ export function SignupForm({
               placeholder="confirm your password"
             />
             {/* {form.password && ( */}
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-2/4 -translate-y-1/2 text-neutral-700 dark:text-neutral-400"
-              >
-                {showPassword ? (
-                  <EyeOff className="size-4" />
-                ) : (
-                  <Eye className="size-4" />
-                )}
-              </button>
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-2/4 -translate-y-1/2 text-neutral-700 dark:text-neutral-400"
+            >
+              {showPassword ? (
+                <EyeOff className="size-4" />
+              ) : (
+                <Eye className="size-4" />
+              )}
+            </button>
             {/* )} */}
           </div>
         </Field>
@@ -110,5 +109,5 @@ export function SignupForm({
         </Field>
       </FieldGroup>
     </form>
-  )
+  );
 }
