@@ -5,13 +5,13 @@ import { type HTMLMotionProps, motion, type SpringOptions } from "motion/react";
 import * as React from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { SlidingNumber, SlidingNumberProps } from "./slidingNumber";
+import { SlidingNumber, SlidingNumberProps } from "../ui/slidingNumber";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "./tooltip";
+} from "../ui/tooltip";
 
 export interface CounterProps extends Omit<HTMLMotionProps<"div">, "children"> {
   number: number;
@@ -39,7 +39,7 @@ export const Counter = React.forwardRef<HTMLDivElement, CounterProps>(
     };
 
     const handleIncrement = () => {
-      setNumber(number < 1000 ? number + 10 : 1000);
+      setNumber(number < 2000 ? number + 10 : 2000);
     };
 
     const resetCounter = () => {
@@ -67,6 +67,7 @@ export const Counter = React.forwardRef<HTMLDivElement, CounterProps>(
                 <Button
                   size="icon"
                   variant="ghost"
+                  disabled={number <= 10}
                   className="size-8 rounded-full"
                   onClick={handleDecrement}
                   aria-label="Decrease"
@@ -108,6 +109,7 @@ export const Counter = React.forwardRef<HTMLDivElement, CounterProps>(
                 <Button
                   size="icon"
                   variant="ghost"
+                  disabled={number >= 2000}
                   className="size-8 rounded-full"
                   onClick={handleIncrement}
                   aria-label="Increase"

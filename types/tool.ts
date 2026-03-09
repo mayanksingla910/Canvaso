@@ -5,6 +5,7 @@ export const ToolsSchema = z.enum([
   "select",
   "rect",
   "circle",
+  "diamond",
   "arrow",
   "line",
   "pen",

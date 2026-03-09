@@ -12,6 +12,7 @@ import {
   Hand,
   Type,
   RectangleHorizontal,
+  Diamond,
 } from "lucide-react";
 import { Card } from "./ui/card";
 import Tool from "./tool";
@@ -30,13 +31,14 @@ const tools: {
   { id: "select", icon: MousePointer2, label: "Select" },
   { id: "rect", icon: RectangleHorizontal, label: "Rectangle" },
   { id: "circle", icon: Circle, label: "Circle" },
+  { id: "diamond", icon: Diamond, label: "Diamond" },
   { id: "arrow", icon: MoveRight, label: "Arrow" },
   { id: "line", icon: Minus, label: "Line" },
   { id: "pen", icon: Pen, label: "Pen" },
-  { id: "text", icon: Type, label: "Text" },
-  { id: "image", icon: Image, label: "Image" },
-  { id: "frame", icon: Frame, label: "Frame" },
-  { id: "eraser", icon: Eraser, label: "Eraser" },
+  // { id: "text", icon: Type, label: "Text" },
+  // { id: "image", icon: Image, label: "Image" },
+  // { id: "frame", icon: Frame, label: "Frame" },
+  // { id: "eraser", icon: Eraser, label: "Eraser" },
 ];
 
 const Toolbar = () => {
