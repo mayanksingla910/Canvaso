@@ -1,5 +1,6 @@
 import { CanvasElement, Point, Viewport } from "@/types/canvas";
 import { getCanvasTheme } from "./theme";
+import { getElementBounds } from "./hit";
 
 const DASH_PATTERNS: Record<string, number[]> = {
   solid: [],
@@ -29,6 +30,7 @@ export function renderFrame(
   elements: CanvasElement[],
   viewport: Viewport,
   selectedIds: string[] = [],
+  selectionBox?: { x: number; y: number; width: number; height: number } | null,
 ) {
   const { width, height } = ctx.canvas;
   const theme = getCanvasTheme();
@@ -54,8 +56,27 @@ export function renderFrame(
     if (!selectedIds.includes(el.id) || el.isHidden) continue;
     ctx.save();
     applyTransform(ctx, el);
-    drawSelectionOutline(ctx, el, theme);
+    drawSelectionOutline(ctx, el, theme, selectedIds.length === 1);
     ctx.restore();
+  }
+  if (selectedIds.length > 1) {
+    const selected = elements.filter((el) => selectedIds.includes(el.id));
+    drawMultipleSelectionOutline(ctx, selected, theme);
+  }
+  if (selectionBox) {
+    ctx.strokeStyle = theme.selection;
+    ctx.fillStyle = theme.selectionFill;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.rect(
+      selectionBox.x,
+      selectionBox.y,
+      selectionBox.width,
+      selectionBox.height,
+    );
+    ctx.fill();
+    ctx.stroke();
+    ctx.setLineDash([]);
   }
 
   ctx.restore();
@@ -73,7 +94,11 @@ function applyTransform(ctx: CanvasRenderingContext2D, el: CanvasElement) {
   }
 }
 
-function applyStrokeStyle(ctx: CanvasRenderingContext2D, el: CanvasElement, theme: ReturnType<typeof getCanvasTheme>) {
+function applyStrokeStyle(
+  ctx: CanvasRenderingContext2D,
+  el: CanvasElement,
+  theme: ReturnType<typeof getCanvasTheme>,
+) {
   ctx.strokeStyle = el.strokeColor ? el.strokeColor : theme.strokeColor;
   ctx.fillStyle =
     el.fillColor == "transparent" ? "rgba(0,0,0,0)" : el.fillColor;
@@ -336,33 +361,15 @@ function drawSelectionOutline(
   ctx: CanvasRenderingContext2D,
   el: CanvasElement,
   theme: ReturnType<typeof getCanvasTheme>,
+  isSingle: boolean,
 ) {
   const p = SELECTION_PADDING;
-  let x: number, y: number, w: number, h: number;
+  const b = getElementBounds(el);
 
-  if (el.type === "line" || el.type === "arrow") {
-    x = Math.min(el.points[0].x, el.points[1].x);
-    y = Math.min(el.points[0].y, el.points[1].y);
-    w = Math.abs(el.points[1].x - el.points[0].x);
-    h = Math.abs(el.points[1].y - el.points[0].y);
-  } else if (el.type === "pen") {
-    const xs = el.points.map((pt) => pt.x);
-    const ys = el.points.map((pt) => pt.y);
-    x = Math.min(...xs);
-    y = Math.min(...ys);
-    w = Math.max(...xs) - x;
-    h = Math.max(...ys) - y;
-  } else {
-    x = el.width >= 0 ? el.x : el.x + el.width;
-    y = el.height >= 0 ? el.y : el.y + el.height;
-    w = Math.abs(el.width);
-    h = Math.abs(el.height);
-  }
-
-  x -= p;
-  y -= p;
-  w += p * 2;
-  h += p * 2;
+  const x = b.left - p;
+  const y = b.top - p;
+  const w = b.right - b.left + p * 2;
+  const h = b.bottom - b.top + p * 2;
 
   // Selection outline
   ctx.strokeStyle = theme.selection;
@@ -373,6 +380,7 @@ function drawSelectionOutline(
   ctx.stroke();
 
   // Handles
+  if (!isSingle) return;
   const handles = getHandlePositions(x, y, w, h);
   for (const handle of handles) {
     ctx.fillStyle = theme.handle;
@@ -384,7 +392,7 @@ function drawSelectionOutline(
       handle.y - HANDLE_SIZE / 2,
       HANDLE_SIZE,
       HANDLE_SIZE,
-      2
+      2,
     );
     ctx.fill();
     ctx.stroke();
@@ -395,6 +403,58 @@ function drawSelectionOutline(
   ctx.stroke();
 }
 
+function drawMultipleSelectionOutline(
+  ctx: CanvasRenderingContext2D,
+  elements: CanvasElement[],
+  theme: ReturnType<typeof getCanvasTheme>,
+) {
+  if (elements.length === 0) return
+  const p = SELECTION_PADDING
+
+  const allBounds = elements.map(getElementBounds)
+  const left   = Math.min(...allBounds.map((b) => b.left))
+  const right  = Math.max(...allBounds.map((b) => b.right))
+  const top    = Math.min(...allBounds.map((b) => b.top))
+  const bottom = Math.max(...allBounds.map((b) => b.bottom))
+
+  const x = left   - p
+  const y = top    - p
+  const w = (right  - left) + p * 2
+  const h = (bottom - top)  + p * 2
+
+  // Selection outline
+  ctx.strokeStyle = theme.selection;
+  ctx.fillStyle = "transparent";
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.setLineDash([3,2]);
+
+  ctx.rect(x, y, w, h);
+  ctx.stroke();
+
+  // Handles
+  const handles = getHandlePositions(x, y, w, h);
+  for (const handle of handles) {
+    ctx.fillStyle = theme.handle;
+    ctx.strokeStyle = theme.handleBorder;
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.setLineDash([]);
+    ctx.roundRect(
+      handle.x - HANDLE_SIZE / 2,
+      handle.y - HANDLE_SIZE / 2,
+      HANDLE_SIZE,
+      HANDLE_SIZE,
+      2,
+    );
+    ctx.fill();
+    ctx.stroke();
+  }
+  ctx.beginPath();
+  ctx.ellipse(x + w / 2, y - 2 * p, 4, 4, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+}
 
 export function getHandlePositions(
   x: number,

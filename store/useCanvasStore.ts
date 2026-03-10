@@ -11,6 +11,7 @@ type CanvasStore = {
   viewport: Viewport;
   setViewport: (viewport: Viewport) => void;
 
+
   selectedIds: string[];
   setSelectedIds: (ids: string[]) => void;
   addToSelection: (id: string) => void;
@@ -31,16 +32,20 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
   },
 
   updateElement: (id, changes) =>
-  set((s) => {
-    const existing = s.elements[id]
-    if (!existing) return s
-    return {
-      elements: {
-        ...s.elements,
-        [id]: { ...existing, ...changes, updatedAt: Date.now() } as CanvasElement,
-      },
-    }
-  }),
+    set((s) => {
+      const existing = s.elements[id];
+      if (!existing) return s;
+      return {
+        elements: {
+          ...s.elements,
+          [id]: {
+            ...existing,
+            ...changes,
+            updatedAt: Date.now(),
+          } as CanvasElement,
+        },
+      };
+    }),
 
   deleteElement: (id) =>
     set((s) => {
@@ -57,6 +62,7 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
 
   viewport: { x: 0, y: 0, zoom: 1 },
   setViewport: (viewport) => set({ viewport }),
+
 
   selectedIds: [],
   setSelectedIds: (ids) => set({ selectedIds: ids }),
@@ -76,14 +82,15 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
   },
 
   undo: () => {
-  const { history, historyIndex } = get();
-  if (historyIndex < 0) return;
-  set({
-    elements: historyIndex === 0 ? {} : structuredClone(history[historyIndex - 1]),
-    historyIndex: historyIndex - 1,
-    selectedIds: [],
-  });
-},
+    const { history, historyIndex } = get();
+    if (historyIndex < 0) return;
+    set({
+      elements:
+        historyIndex === 0 ? {} : structuredClone(history[historyIndex - 1]),
+      historyIndex: historyIndex - 1,
+      selectedIds: [],
+    });
+  },
 
   redo: () => {
     const { history, historyIndex } = get();

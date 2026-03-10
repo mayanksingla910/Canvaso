@@ -8,11 +8,18 @@ export function hitTest(
   elements: CanvasElement[],
   selectedIds: string[] = [],
 ): CanvasElement | null {
+  // If multiple selected, check their combined bounding box first
+  if (selectedIds.length > 1) {
+    const selectedElements = elements.filter((el) => selectedIds.includes(el.id))
+    if (hitTestMultipleBoundingBoxes(point, selectedElements)) {
+      return selectedElements[0]  // return any — caller just needs a truthy hit
+    }
+  }
+
   for (let i = elements.length - 1; i >= 0; i--) {
     const el = elements[i];
     if (el.isHidden || el.isLocked) continue;
     if (selectedIds.includes(el.id) && hitTestBoundingBox(point, el)) return el
-
     if (hitTestElement(point, el)) return el;
   }
   return null;
@@ -160,32 +167,47 @@ function distanceToSegment(p: Point, a: Point, b: Point): number {
 }
 
 function hitTestBoundingBox(point: Point, el: CanvasElement): boolean {
-  let x: number, y: number, w: number, h: number
-
-  if (el.type === "line" || el.type === "arrow") {
-    x = Math.min(el.points[0].x, el.points[1].x)
-    y = Math.min(el.points[0].y, el.points[1].y)
-    w = Math.abs(el.points[1].x - el.points[0].x)
-    h = Math.abs(el.points[1].y - el.points[0].y)
-  } else if (el.type === "pen") {
-    const xs = el.points.map(p => p.x)
-    const ys = el.points.map(p => p.y)
-    x = Math.min(...xs)
-    y = Math.min(...ys)
-    w = Math.max(...xs) - x
-    h = Math.max(...ys) - y
-  } else {
-    x = el.width  >= 0 ? el.x : el.x + el.width
-    y = el.height >= 0 ? el.y : el.y + el.height
-    w = Math.abs(el.width)
-    h = Math.abs(el.height)
-  }
-
   const p = HIT_PADDING
+  const b = getElementBounds(el)
   return (
-    point.x >= x - p &&
-    point.x <= x + w + p &&
-    point.y >= y - p &&
-    point.y <= y + h + p
+    point.x >= b.left   - p &&
+    point.x <= b.right  + p &&
+    point.y >= b.top    - p &&
+    point.y <= b.bottom + p
   )
+}
+
+function hitTestMultipleBoundingBoxes(point: Point, els: CanvasElement[]): boolean {
+  const p = HIT_PADDING
+  const allBounds = els.map(getElementBounds)
+  const left   = Math.min(...allBounds.map((b) => b.left))
+  const right  = Math.max(...allBounds.map((b) => b.right))
+  const top    = Math.min(...allBounds.map((b) => b.top))
+  const bottom = Math.max(...allBounds.map((b) => b.bottom))
+
+  return (
+    point.x >= left   - p &&
+    point.x <= right  + p &&
+    point.y >= top    - p &&
+    point.y <= bottom + p
+  )
+}
+
+export function getElementBounds(el: CanvasElement) {
+  if (el.type === "pen" || el.type === "line" || el.type === "arrow") {
+    const xs = el.points.map((p) => p.x)
+    const ys = el.points.map((p) => p.y)
+    return {
+      left:   Math.min(...xs),
+      right:  Math.max(...xs),
+      top:    Math.min(...ys),
+      bottom: Math.max(...ys),
+    }
+  }
+  return {
+    left:   el.width  >= 0 ? el.x : el.x + el.width,
+    right:  el.width  >= 0 ? el.x + el.width : el.x,
+    top:    el.height >= 0 ? el.y : el.y + el.height,
+    bottom: el.height >= 0 ? el.y + el.height : el.y,
+  }
 }

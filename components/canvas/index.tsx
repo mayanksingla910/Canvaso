@@ -1,6 +1,5 @@
 "use client";
 import { useCanvas } from "@/hooks/useCanvas";
-import { useEffect } from "react";
 
 export default function Canvas() {
   const {
@@ -9,22 +8,8 @@ export default function Canvas() {
     onMouseMove,
     onMouseUp,
     onMouseLeave,
-    onWheel,
     getCursor,
   } = useCanvas();
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const handleWheel = (e: WheelEvent) => {
-      e.preventDefault();
-      onWheel(e);
-    };
-
-    canvas.addEventListener("wheel", handleWheel, { passive: false });
-    return () => canvas.removeEventListener("wheel", handleWheel);
-  }, [onWheel]);
 
   return (
     <canvas

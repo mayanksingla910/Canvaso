@@ -2,7 +2,7 @@ import { Bounds, Point, Viewport } from "@/types/canvas";
 
 const MIN_ZOOM = 0.1;
 const MAX_ZOOM = 20;
-const ZOOM_SENSITIVITY = 0.01;
+const ZOOM_SENSITIVITY = 0.03;
 const ZOOM_STEP = 0.05;
 
 export function screenToCanvas(point: Point, viewport: Viewport) {
