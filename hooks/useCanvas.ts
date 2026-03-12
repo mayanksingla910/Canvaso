@@ -1,24 +1,28 @@
 "use client";
 
 import { useEffect, useRef, useCallback, useState } from "react";
-import {
-  screenToCanvas,
-} from "@/lib/canvas/viewport";
+import { screenToCanvas } from "@/lib/canvas/viewport";
 import { renderFrame } from "@/lib/canvas/renderer";
 import { useCanvasStore } from "@/store/useCanvasStore";
 import { useToolStore } from "@/store/useToolStore";
-import { hitTest } from "@/lib/canvas/hit";
+import {
+  getElementBounds,
+  hitTest,
+  hitTestRotationHandle,
+} from "@/lib/canvas/hit";
 import usePanning from "./canvas/usePanning";
 import useMoving from "./canvas/useMoving";
 import useDrawing from "./canvas/useDrawing";
 import { Point } from "@/types/canvas";
 import useSelectionBox from "./canvas/useSelectionBox";
 import useWheel from "./canvas/useWheel";
+import useRotation from "./canvas/useRotation";
 
 export function useCanvas() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const [isHoveringElement, setIsHoveringElement] = useState(false);
+  const [isHoveringRotateHandle, setIsHoveringRotateHandle] = useState(false);
 
   const getCanvasPoint = useCallback(
     (e: React.MouseEvent | MouseEvent): Point =>
@@ -41,16 +45,18 @@ export function useCanvas() {
   const { startDrawing, continueDrawing, stopDrawing } =
     useDrawing(getCanvasPoint);
 
-  const { startSelectionBox, continueSelectionBox, stopSelectionBox, isSelecting } =
-    useSelectionBox(getCanvasPoint, startMoving);
+  const { startRotation, continueRotation, stopRotation, isRotatingState } =
+    useRotation(getCanvasPoint);
 
   const {
-    elements,
-    viewport,
-    selectedIds,
-    setSelectedIds,
-    clearSelection,
-  } = useCanvasStore();
+    startSelectionBox,
+    continueSelectionBox,
+    stopSelectionBox,
+    isSelecting,
+  } = useSelectionBox(getCanvasPoint, startMoving);
+
+  const { elements, viewport, selectedIds, setSelectedIds, clearSelection } =
+    useCanvasStore();
 
   const { selectedTool } = useToolStore();
 
@@ -64,8 +70,10 @@ export function useCanvas() {
       Object.values(elements),
       viewport,
       selectedIds,
+      null,
+      isRotatingState,
     );
-  }, [elements, viewport, selectedIds]);
+  }, [elements, viewport, selectedIds, isRotatingState]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -98,12 +106,20 @@ export function useCanvas() {
       }
 
       if (selectedTool === "select") {
+        if (startRotation(e)) return;
         startSelectionBox(e);
         return;
       }
       startDrawing(e);
     },
-    [startPanning, selectedTool, isPanTrigger, startSelectionBox, startDrawing],
+    [
+      startPanning,
+      selectedTool,
+      isPanTrigger,
+      startSelectionBox,
+      startDrawing,
+      startRotation,
+    ],
   );
 
   // ── Mouse move ───────────────────────────────────────────────────────────────
@@ -115,22 +131,53 @@ export function useCanvas() {
       // Pan — check first, highest priority
       if (continuePanning(e)) return;
 
+      if (continueRotation(e)) return;
+
       // Move selected elements
       if (continueMoving(e)) return;
 
-      // Select tool — selection box + hover detection
       if (selectedTool === "select") {
         continueSelectionBox(e, canvasRef);
+
         if (!isSelecting()) {
-          const allElements = Object.values(useCanvasStore.getState().elements);
+          const { elements, selectedIds } = useCanvasStore.getState();
+          const allElements = Object.values(elements);
+
+          if (selectedIds.length >= 1) {
+            const selectedElements = selectedIds
+              .map((id) => elements[id])
+              .filter(Boolean);
+            const allBounds = selectedElements.map(getElementBounds);
+            const sides = {
+              left: Math.min(...allBounds.map((b) => b.left)),
+              right: Math.max(...allBounds.map((b) => b.right)),
+              top: Math.min(...allBounds.map((b) => b.top)),
+              bottom: Math.max(...allBounds.map((b) => b.bottom)),
+            };
+            const angle =
+              selectedElements.length === 1
+                ? (selectedElements[0].angle ?? 0)
+                : 0;
+
+            if (hitTestRotationHandle(canvasPoint, sides, angle)) {
+              setIsHoveringRotateHandle(true);
+              setIsHoveringElement(false);
+              return;
+            }
+          }
+
+          setIsHoveringRotateHandle(false);
           const hit = hitTest(canvasPoint, allElements, selectedIds);
           setIsHoveringElement(!!hit);
         } else {
+          setIsHoveringRotateHandle(false);
           setIsHoveringElement(false);
         }
         return;
       }
 
+      setIsHoveringRotateHandle(false);
+      setIsHoveringElement(false);
       // Drawing tools
       continueDrawing(e);
     },
@@ -141,8 +188,8 @@ export function useCanvas() {
       continueDrawing,
       selectedTool,
       getCanvasPoint,
-      selectedIds,
       isSelecting,
+      continueRotation,
     ],
   );
 
@@ -151,12 +198,13 @@ export function useCanvas() {
   const onMouseUp = useCallback(() => {
     stopPanning();
 
+    stopRotation();
     // End move
     stopMoving();
     stopSelectionBox(canvasRef);
     // End draw
     stopDrawing();
-  }, [stopPanning, stopMoving, stopDrawing, stopSelectionBox]);
+  }, [stopPanning, stopMoving, stopDrawing, stopSelectionBox, stopRotation]);
 
   // ── Mouse leave ───────────────────────────────────────────────────────────────
 
@@ -231,11 +279,12 @@ export function useCanvas() {
   const getCursor = useCallback(() => {
     if (isPanning) return "grabbing";
     if (selectedTool === "hand") return "grab";
+    if (isHoveringRotateHandle) return "grab";
     if (isHoveringElement && selectedTool === "select") return "move";
     if (selectedTool === "select") return "default";
     if (selectedTool === "eraser") return "cell";
     return "crosshair";
-  }, [selectedTool, isPanning, isHoveringElement]);
+  }, [selectedTool, isPanning, isHoveringElement, isHoveringRotateHandle]);
 
   return {
     canvasRef,

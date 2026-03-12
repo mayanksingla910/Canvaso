@@ -31,6 +31,7 @@ export function renderFrame(
   viewport: Viewport,
   selectedIds: string[] = [],
   selectionBox?: { x: number; y: number; width: number; height: number } | null,
+  isRotating?: boolean,
 ) {
   const { width, height } = ctx.canvas;
   const theme = getCanvasTheme();
@@ -59,7 +60,7 @@ export function renderFrame(
     drawSelectionOutline(ctx, el, theme, selectedIds.length === 1);
     ctx.restore();
   }
-  if (selectedIds.length > 1) {
+  if (selectedIds.length > 1 && !isRotating) {
     const selected = elements.filter((el) => selectedIds.includes(el.id));
     drawMultipleSelectionOutline(ctx, selected, theme);
   }
@@ -85,13 +86,28 @@ export function renderFrame(
 function applyTransform(ctx: CanvasRenderingContext2D, el: CanvasElement) {
   ctx.globalAlpha = el.opacity ?? 1;
 
-  if (el.angle) {
-    const cx = el.x + el.width / 2;
-    const cy = el.y + el.height / 2;
-    ctx.translate(cx, cy);
-    ctx.rotate(el.angle);
-    ctx.translate(-cx, -cy);
+  const angle = el.angle ?? 0;
+  if (!angle) return;
+
+  let cx: number, cy: number;
+
+  if (el.type === "pen" || el.type === "line" || el.type === "arrow") {
+    const xs = el.points.map((p) => p.x);
+    const ys = el.points.map((p) => p.y);
+    const left = Math.min(...xs);
+    const right = Math.max(...xs);
+    const top = Math.min(...ys);
+    const bottom = Math.max(...ys);
+    cx = (left + right) / 2;
+    cy = (top + bottom) / 2;
+  } else {
+    cx = el.x + el.width / 2;
+    cy = el.y + el.height / 2;
   }
+
+  ctx.translate(cx, cy);
+  ctx.rotate(el.angle);
+  ctx.translate(-cx, -cy);
 }
 
 function applyStrokeStyle(
@@ -408,26 +424,26 @@ function drawMultipleSelectionOutline(
   elements: CanvasElement[],
   theme: ReturnType<typeof getCanvasTheme>,
 ) {
-  if (elements.length === 0) return
-  const p = SELECTION_PADDING
+  if (elements.length === 0) return;
+  const p = SELECTION_PADDING;
 
-  const allBounds = elements.map(getElementBounds)
-  const left   = Math.min(...allBounds.map((b) => b.left))
-  const right  = Math.max(...allBounds.map((b) => b.right))
-  const top    = Math.min(...allBounds.map((b) => b.top))
-  const bottom = Math.max(...allBounds.map((b) => b.bottom))
+  const allBounds = elements.map(getElementBounds);
+  const left = Math.min(...allBounds.map((b) => b.left));
+  const right = Math.max(...allBounds.map((b) => b.right));
+  const top = Math.min(...allBounds.map((b) => b.top));
+  const bottom = Math.max(...allBounds.map((b) => b.bottom));
 
-  const x = left   - p
-  const y = top    - p
-  const w = (right  - left) + p * 2
-  const h = (bottom - top)  + p * 2
+  const x = left - p;
+  const y = top - p;
+  const w = right - left + p * 2;
+  const h = bottom - top + p * 2;
 
   // Selection outline
   ctx.strokeStyle = theme.selection;
   ctx.fillStyle = "transparent";
   ctx.lineWidth = 1.5;
   ctx.beginPath();
-  ctx.setLineDash([3,2]);
+  ctx.setLineDash([3, 2]);
 
   ctx.rect(x, y, w, h);
   ctx.stroke();
