@@ -3,19 +3,21 @@ import { CanvasElement, Point } from "@/types/canvas";
 
 const HIT_PADDING = 10;
 const SELECTION_PADDING = 6;
+const HANDLE_SIZE = 8;
+const ROTATION_HANDLE_OFFSET = 20;
+const ROTATION_HANDLE_RADIUS = 4;
 
 export function hitTest(
   point: Point,
   elements: CanvasElement[],
   selectedIds: string[] = [],
 ): CanvasElement | null {
-  // If multiple selected, check their combined bounding box first
   if (selectedIds.length > 1) {
     const selectedElements = elements.filter((el) =>
       selectedIds.includes(el.id),
     );
     if (hitTestMultipleBoundingBoxes(point, selectedElements)) {
-      return selectedElements[0]; // return any — caller just needs a truthy hit
+      return selectedElements[0];
     }
   }
 
@@ -98,7 +100,6 @@ function hitTestDiamond(
   const innerH = Math.abs(el.height) / 2 - p;
 
   const insideOuter = dx / outerW + dy / outerH <= 1;
-
   if (!insideOuter) return false;
 
   if (el.fillColor === "transparent" || el.fillColor === "rgba(0,0,0,0)") {
@@ -205,13 +206,17 @@ export function hitTestRotationHandle(
   point: Point,
   sides: { left: number; right: number; top: number; bottom: number },
   angle: number = 0,
+  zoom: number =1,
 ): boolean {
-  const p = SELECTION_PADDING;
+  const p = SELECTION_PADDING /zoom;
+  const offset = ROTATION_HANDLE_OFFSET / zoom;
+  const hitRadius = (ROTATION_HANDLE_RADIUS + 4) / zoom;
+
   const cx = (sides.left + sides.right) / 2;
   const cy = (sides.top + sides.bottom) / 2;
 
   const rawHandleX = cx;
-  const rawHandleY = sides.top - p * 2;
+  const rawHandleY = sides.top - p - offset;
 
   const cos = Math.cos(angle);
   const sin = Math.sin(angle);
@@ -221,9 +226,32 @@ export function hitTestRotationHandle(
   const handleX = cx + dx * cos - dy * sin;
   const handleY = cy + dx * sin + dy * cos;
 
-  return Math.hypot(point.x - handleX, point.y - handleY) <= 8;
+  return Math.hypot(point.x - handleX, point.y - handleY) <= hitRadius;
 }
 
+export function hitTestResizeHandle(point: Point, el: CanvasElement, zoom: number = 1): number {
+  const localPoint = getLocalPoint(point, el);
+  const p = SELECTION_PADDING /zoom;
+  const hitRadius = (HANDLE_SIZE / 2 + 3) / zoom;
+
+  const b = getElementBounds(el);
+
+  const handles = [
+    { x: b.left - p, y: b.top - p },
+    { x: b.right + p, y: b.top - p },
+    { x: b.right + p, y: b.bottom + p },
+    { x: b.left - p, y: b.bottom + p },
+  ];
+
+  for (let i = 0; i < handles.length; i++) {
+    const handle = handles[i];
+    if (Math.hypot(localPoint.x - handle.x, localPoint.y - handle.y) <= hitRadius) {
+      return i;
+    }
+  }
+
+  return -1;
+}
 
 export function getElementBounds(el: CanvasElement) {
   if (el.type === "pen" || el.type === "line" || el.type === "arrow") {
@@ -244,7 +272,7 @@ export function getElementBounds(el: CanvasElement) {
   };
 }
 
-function getLocalPoint(point: Point, el: CanvasElement): Point {
+export function getLocalPoint(point: Point, el: CanvasElement): Point {
   const angle = el.angle ?? 0;
   if (angle === 0) return point;
 

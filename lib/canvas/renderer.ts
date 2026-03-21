@@ -24,6 +24,10 @@ const FONT_FAMILY_MAP: Record<string, string> = {
 
 const SELECTION_PADDING = 6;
 const HANDLE_SIZE = 8;
+const HANDLE_RADIUS = 2;
+const ROTATION_HANDLE_OFFSET = 20;
+const ROTATION_HANDLE_RADIUS = 4;
+const SELECTION_LINE_WIDTH = 1.5;
 
 export function renderFrame(
   ctx: CanvasRenderingContext2D,
@@ -35,12 +39,15 @@ export function renderFrame(
 ) {
   const { width, height } = ctx.canvas;
   const theme = getCanvasTheme();
+  const zoom = viewport.zoom;
+
+  const lw = SELECTION_LINE_WIDTH / zoom;
 
   ctx.clearRect(0, 0, width, height);
 
   ctx.save();
   ctx.translate(viewport.x, viewport.y);
-  ctx.scale(viewport.zoom, viewport.zoom);
+  ctx.scale(zoom, zoom);
 
   for (const el of elements) {
     if (el.isHidden) continue;
@@ -48,26 +55,26 @@ export function renderFrame(
     ctx.save();
     applyTransform(ctx, el);
     applyStrokeStyle(ctx, el, theme);
-
     drawElement(ctx, el);
-
     ctx.restore();
   }
+
   for (const el of elements) {
     if (!selectedIds.includes(el.id) || el.isHidden) continue;
     ctx.save();
     applyTransform(ctx, el);
-    drawSelectionOutline(ctx, el, theme, selectedIds.length === 1);
+    drawSelectionOutline(ctx, el, theme, selectedIds.length === 1, zoom);
     ctx.restore();
   }
   if (selectedIds.length > 1 && !isRotating) {
     const selected = elements.filter((el) => selectedIds.includes(el.id));
-    drawMultipleSelectionOutline(ctx, selected, theme);
+    drawMultipleSelectionOutline(ctx, selected, theme, zoom);
   }
+
   if (selectionBox) {
     ctx.strokeStyle = theme.selection;
     ctx.fillStyle = theme.selectionFill;
-    ctx.lineWidth = 1;
+    ctx.lineWidth = lw;
     ctx.beginPath();
     ctx.rect(
       selectionBox.x,
@@ -94,12 +101,8 @@ function applyTransform(ctx: CanvasRenderingContext2D, el: CanvasElement) {
   if (el.type === "pen" || el.type === "line" || el.type === "arrow") {
     const xs = el.points.map((p) => p.x);
     const ys = el.points.map((p) => p.y);
-    const left = Math.min(...xs);
-    const right = Math.max(...xs);
-    const top = Math.min(...ys);
-    const bottom = Math.max(...ys);
-    cx = (left + right) / 2;
-    cy = (top + bottom) / 2;
+    cx = (Math.min(...xs) + Math.max(...xs)) / 2;
+    cy = (Math.min(...ys) + Math.max(...ys)) / 2;
   } else {
     cx = el.x + el.width / 2;
     cy = el.y + el.height / 2;
@@ -115,13 +118,13 @@ function applyStrokeStyle(
   el: CanvasElement,
   theme: ReturnType<typeof getCanvasTheme>,
 ) {
-  ctx.strokeStyle = el.strokeColor ? el.strokeColor : theme.strokeColor;
+  ctx.strokeStyle = theme.strokeColor ?? el.strokeColor;
   ctx.fillStyle =
     el.fillColor == "transparent" ? "rgba(0,0,0,0)" : el.fillColor;
   ctx.lineWidth = el.strokeWidth;
   ctx.lineCap = "round";
   ctx.lineJoin = "round";
-  ctx.setLineDash(DASH_PATTERNS[el.strokeStyle ?? []]);
+  ctx.setLineDash(DASH_PATTERNS[el.strokeStyle ?? "solid"] ?? []);
 }
 
 function drawElement(ctx: CanvasRenderingContext2D, el: CanvasElement) {
@@ -140,10 +143,6 @@ function drawElement(ctx: CanvasRenderingContext2D, el: CanvasElement) {
       return drawArrow(ctx, el);
     case "text":
       return drawText(ctx, el);
-    // case "image":
-    //   return drawImage(ctx, el);
-    // case "frame":
-    //   return drawFrame(ctx, el);
   }
 }
 
@@ -152,11 +151,8 @@ function drawRect(
   el: Extract<CanvasElement, { type: "rect" }>,
 ) {
   const { x, y, width, height, cornerRadius } = el;
-
   const minSide = Math.min(Math.abs(width), Math.abs(height));
-
-  const maxAllowed = minSide / 4;
-  const radius = Math.min(cornerRadius, maxAllowed);
+  const radius = Math.min(cornerRadius, minSide / 4);
 
   ctx.beginPath();
   ctx.roundRect(x, y, width, height, radius);
@@ -192,19 +188,17 @@ function drawDiamond(
   const cx = x + width / 2;
   const cy = y + height / 2;
 
-  const minSide = Math.min(Math.abs(width), Math.abs(height));
-  const r = Math.min(cornerRadius, minSide / 8);
+  const r = Math.min(
+    cornerRadius,
+    Math.min(Math.abs(width), Math.abs(height)) / 8,
+  );
 
   const top = { x: cx, y: y };
   const right = { x: x + width, y: cy };
   const bottom = { x: cx, y: y + height };
   const left = { x: x, y: cy };
 
-  function offsetPoint(
-    from: { x: number; y: number },
-    to: { x: number; y: number },
-    dist: number,
-  ) {
+  function offsetPoint(from: Point, to: Point, dist: number): Point {
     const dx = to.x - from.x;
     const dy = to.y - from.y;
     const len = Math.hypot(dx, dy);
@@ -222,21 +216,17 @@ function drawDiamond(
   ];
 
   ctx.beginPath();
-
   corners.forEach(({ tip, prev, next }, i) => {
     const entry = offsetPoint(tip, prev, r);
     const exit = offsetPoint(tip, next, r);
-
     if (i === 0) {
       ctx.moveTo(entry.x, entry.y);
     } else {
       ctx.lineTo(entry.x, entry.y);
     }
-
     // Curve through the tip
     ctx.quadraticCurveTo(tip.x, tip.y, exit.x, exit.y);
   });
-
   ctx.closePath();
   ctx.fill();
   ctx.stroke();
@@ -359,6 +349,7 @@ function drawText(
   ctx.fillStyle = el.strokeColor;
   ctx.textAlign = el.textAlign as CanvasTextAlign;
   ctx.textBaseline = "top";
+
   const lines = el.content.split("\n");
   const lineHeight = fontSize * 1.4;
   const startX =
@@ -378,54 +369,88 @@ function drawSelectionOutline(
   el: CanvasElement,
   theme: ReturnType<typeof getCanvasTheme>,
   isSingle: boolean,
+  zoom: number,
 ) {
-  const p = SELECTION_PADDING;
-  const b = getElementBounds(el);
+  const p = SELECTION_PADDING / zoom;
+  const hSize = HANDLE_SIZE / zoom;
+  const rotOff = ROTATION_HANDLE_OFFSET / zoom;
+  const rotRad = ROTATION_HANDLE_RADIUS / zoom;
+  const hRad = HANDLE_RADIUS / zoom;
+  const lw = SELECTION_LINE_WIDTH / zoom;
 
+  const b = getElementBounds(el);
   const x = b.left - p;
   const y = b.top - p;
   const w = b.right - b.left + p * 2;
   const h = b.bottom - b.top + p * 2;
 
   // Selection outline
+  ctx.save();
   ctx.strokeStyle = theme.selection;
   ctx.fillStyle = "transparent";
-  ctx.lineWidth = 1.5;
+  ctx.lineWidth = lw;
+  ctx.setLineDash([]);
   ctx.beginPath();
   ctx.rect(x, y, w, h);
   ctx.stroke();
+  ctx.restore();
 
   // Handles
   if (!isSingle) return;
+
   const handles = getHandlePositions(x, y, w, h);
+
+  ctx.save();
   for (const handle of handles) {
     ctx.fillStyle = theme.handle;
     ctx.strokeStyle = theme.handleBorder;
-    ctx.lineWidth = 1.5;
+    ctx.lineWidth = lw;
+    ctx.setLineDash([]);
     ctx.beginPath();
     ctx.roundRect(
-      handle.x - HANDLE_SIZE / 2,
-      handle.y - HANDLE_SIZE / 2,
-      HANDLE_SIZE,
-      HANDLE_SIZE,
-      2,
+      handle.x - hSize / 2,
+      handle.y - hSize / 2,
+      hSize,
+      hSize,
+      hRad,
     );
     ctx.fill();
     ctx.stroke();
   }
+  ctx.restore();
+
+  ctx.save();
+  ctx.strokeStyle = theme.handleBorder;
+  ctx.fillStyle = theme.handle;
+  ctx.lineWidth = lw;
+  ctx.setLineDash([]);
+
+  const stemY = y - rotOff;
   ctx.beginPath();
-  ctx.ellipse(x + w / 2, y - 2 * p, 4, 4, 0, 0, Math.PI * 2);
+  ctx.moveTo(x + w / 2, y);
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.arc(x + w / 2, stemY, rotRad, 0, Math.PI * 2);
   ctx.fill();
   ctx.stroke();
+  ctx.restore();
 }
 
 function drawMultipleSelectionOutline(
   ctx: CanvasRenderingContext2D,
   elements: CanvasElement[],
   theme: ReturnType<typeof getCanvasTheme>,
+  zoom: number,
 ) {
   if (elements.length === 0) return;
-  const p = SELECTION_PADDING;
+
+  const p = SELECTION_PADDING / zoom;
+  const hSize = HANDLE_SIZE / zoom;
+  const hRad = HANDLE_RADIUS / zoom;
+  const rotOff = ROTATION_HANDLE_OFFSET / zoom;
+  const rotRad = ROTATION_HANDLE_RADIUS / zoom;
+  const lw = SELECTION_LINE_WIDTH / zoom;
 
   const allBounds = elements.map(getElementBounds);
   const left = Math.min(...allBounds.map((b) => b.left));
@@ -439,37 +464,56 @@ function drawMultipleSelectionOutline(
   const h = bottom - top + p * 2;
 
   // Selection outline
+  ctx.save();
   ctx.strokeStyle = theme.selection;
   ctx.fillStyle = "transparent";
-  ctx.lineWidth = 1.5;
+  ctx.lineWidth = lw;
+  ctx.setLineDash([4 / zoom, 3 / zoom]);
   ctx.beginPath();
-  ctx.setLineDash([3, 2]);
-
   ctx.rect(x, y, w, h);
   ctx.stroke();
+  ctx.restore();
 
   // Handles
+
+  ctx.save();
+  ctx.setLineDash([]);
   const handles = getHandlePositions(x, y, w, h);
+
   for (const handle of handles) {
     ctx.fillStyle = theme.handle;
     ctx.strokeStyle = theme.handleBorder;
-    ctx.lineWidth = 1.5;
+    ctx.lineWidth = lw;
     ctx.beginPath();
     ctx.setLineDash([]);
     ctx.roundRect(
-      handle.x - HANDLE_SIZE / 2,
-      handle.y - HANDLE_SIZE / 2,
-      HANDLE_SIZE,
-      HANDLE_SIZE,
-      2,
+      handle.x - hSize / 2,
+      handle.y - hSize / 2,
+      hSize,
+      hSize,
+      hRad,
     );
     ctx.fill();
     ctx.stroke();
   }
+  ctx.restore();
+
+  ctx.save();
+  ctx.strokeStyle = theme.handleBorder;
+  ctx.fillStyle = theme.handle;
+  ctx.lineWidth = lw;
+  ctx.setLineDash([]);
+
+  const stemY = y - rotOff;
   ctx.beginPath();
-  ctx.ellipse(x + w / 2, y - 2 * p, 4, 4, 0, 0, Math.PI * 2);
+  ctx.moveTo(x + w / 2, y);
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.arc(x + w / 2, stemY, rotRad, 0, Math.PI * 2);
   ctx.fill();
   ctx.stroke();
+  ctx.restore();
 }
 
 export function getHandlePositions(

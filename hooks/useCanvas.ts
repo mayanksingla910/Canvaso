@@ -8,21 +8,24 @@ import { useToolStore } from "@/store/useToolStore";
 import {
   getElementBounds,
   hitTest,
+  hitTestResizeHandle,
   hitTestRotationHandle,
 } from "@/lib/canvas/hit";
 import usePanning from "./canvas/usePanning";
 import useMoving from "./canvas/useMoving";
 import useDrawing from "./canvas/useDrawing";
-import { Point } from "@/types/canvas";
+import { CanvasElement, Point } from "@/types/canvas";
 import useSelectionBox from "./canvas/useSelectionBox";
 import useWheel from "./canvas/useWheel";
 import useRotation from "./canvas/useRotation";
+import useResizing from "./canvas/useResizing";
 
 export function useCanvas() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const [isHoveringElement, setIsHoveringElement] = useState(false);
   const [isHoveringRotateHandle, setIsHoveringRotateHandle] = useState(false);
+  const [hoveredHandle, setHoveredHandle] = useState(-1);
 
   const getCanvasPoint = useCallback(
     (e: React.MouseEvent | MouseEvent): Point =>
@@ -54,6 +57,9 @@ export function useCanvas() {
     stopSelectionBox,
     isSelecting,
   } = useSelectionBox(getCanvasPoint, startMoving);
+
+  const { startResize, continueResize, stopResize } =
+    useResizing(getCanvasPoint);
 
   const { elements, viewport, selectedIds, setSelectedIds, clearSelection } =
     useCanvasStore();
@@ -106,6 +112,7 @@ export function useCanvas() {
       }
 
       if (selectedTool === "select") {
+        if (startResize(e)) return;
         if (startRotation(e)) return;
         startSelectionBox(e);
         return;
@@ -119,6 +126,7 @@ export function useCanvas() {
       startSelectionBox,
       startDrawing,
       startRotation,
+      startResize,
     ],
   );
 
@@ -131,6 +139,7 @@ export function useCanvas() {
       // Pan — check first, highest priority
       if (continuePanning(e)) return;
 
+      if (continueResize(e)) return;
       if (continueRotation(e)) return;
 
       // Move selected elements
@@ -159,12 +168,50 @@ export function useCanvas() {
                 ? (selectedElements[0].angle ?? 0)
                 : 0;
 
-            if (hitTestRotationHandle(canvasPoint, sides, angle)) {
+            if (
+              hitTestRotationHandle(canvasPoint, sides, angle, viewport.zoom)
+            ) {
               setIsHoveringRotateHandle(true);
               setIsHoveringElement(false);
               return;
             }
           }
+          // Check resize handles — single OR multi
+          if (selectedIds.length >= 1) {
+            let handle = -1;
+
+            if (selectedIds.length === 1) {
+              const el = elements[selectedIds[0]];
+              if (el)
+                handle = hitTestResizeHandle(canvasPoint, el, viewport.zoom);
+            } else {
+              // Build fake group element for multi-select handle hit test
+              const selectedElements = selectedIds
+                .map((id) => elements[id])
+                .filter(Boolean);
+              const allBounds = selectedElements.map(getElementBounds);
+              const groupEl = {
+                x: Math.min(...allBounds.map((b) => b.left)),
+                y: Math.min(...allBounds.map((b) => b.top)),
+                width:
+                  Math.max(...allBounds.map((b) => b.right)) -
+                  Math.min(...allBounds.map((b) => b.left)),
+                height:
+                  Math.max(...allBounds.map((b) => b.bottom)) -
+                  Math.min(...allBounds.map((b) => b.top)),
+                angle: 0,
+              } as CanvasElement;
+              handle = hitTestResizeHandle(canvasPoint, groupEl, viewport.zoom);
+            }
+
+            if (handle !== -1) {
+              setHoveredHandle(handle);
+              setIsHoveringElement(false);
+              setIsHoveringRotateHandle(false);
+              return;
+            }
+          }
+          setHoveredHandle(-1);
 
           setIsHoveringRotateHandle(false);
           const hit = hitTest(canvasPoint, allElements, selectedIds);
@@ -190,6 +237,8 @@ export function useCanvas() {
       getCanvasPoint,
       isSelecting,
       continueRotation,
+      continueResize,
+      viewport,
     ],
   );
 
@@ -198,13 +247,21 @@ export function useCanvas() {
   const onMouseUp = useCallback(() => {
     stopPanning();
 
+    stopResize();
     stopRotation();
     // End move
     stopMoving();
     stopSelectionBox(canvasRef);
     // End draw
     stopDrawing();
-  }, [stopPanning, stopMoving, stopDrawing, stopSelectionBox, stopRotation]);
+  }, [
+    stopPanning,
+    stopMoving,
+    stopDrawing,
+    stopSelectionBox,
+    stopRotation,
+    stopResize,
+  ]);
 
   // ── Mouse leave ───────────────────────────────────────────────────────────────
 
@@ -277,6 +334,13 @@ export function useCanvas() {
   // ── Cursor style ──────────────────────────────────────────────────────────────
 
   const getCursor = useCallback(() => {
+    const HANDLE_CURSORS = [
+      "nwse-resize",
+      "nesw-resize",
+      "nwse-resize",
+      "nesw-resize",
+    ];
+    if (hoveredHandle !== -1) return HANDLE_CURSORS[hoveredHandle];
     if (isPanning) return "grabbing";
     if (selectedTool === "hand") return "grab";
     if (isHoveringRotateHandle) return "grab";
@@ -284,7 +348,13 @@ export function useCanvas() {
     if (selectedTool === "select") return "default";
     if (selectedTool === "eraser") return "cell";
     return "crosshair";
-  }, [selectedTool, isPanning, isHoveringElement, isHoveringRotateHandle]);
+  }, [
+    selectedTool,
+    isPanning,
+    isHoveringElement,
+    isHoveringRotateHandle,
+    hoveredHandle,
+  ]);
 
   return {
     canvasRef,
