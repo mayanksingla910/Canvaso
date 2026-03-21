@@ -2,24 +2,18 @@
 
 import {
   Pen,
-  Eraser,
   MousePointer2,
   Circle,
   MoveRight,
   Minus,
-  Image,
-  Frame,
   Hand,
-  Type,
   RectangleHorizontal,
   Diamond,
 } from "lucide-react";
 import { Card } from "./ui/card";
 import Tool from "./tool";
 import { ToolType } from "@/types/tool";
-import {
-  TooltipProvider,
-} from "./ui/tooltip";
+import { TooltipProvider } from "./ui/tooltip";
 import { motion } from "motion/react";
 
 const tools: {
@@ -35,16 +29,16 @@ const tools: {
   { id: "arrow", icon: MoveRight, label: "Arrow" },
   { id: "line", icon: Minus, label: "Line" },
   { id: "pen", icon: Pen, label: "Pen" },
-  // { id: "text", icon: Type, label: "Text" },
-  // { id: "image", icon: Image, label: "Image" },
-  // { id: "frame", icon: Frame, label: "Frame" },
-  // { id: "eraser", icon: Eraser, label: "Eraser" },
 ];
 
 const Toolbar = () => {
   return (
     <TooltipProvider delayDuration={500}>
-      <Card className="sticky top-5 z-10 max-w-3xl w-fit mx-auto p-1">
+      <Card
+        className="fixed z-20 w-fit h-fit p-1
+        bottom-8 left-1/2 -translate-x-1/2
+        md:bottom-auto md:top-5 md:left-1/2 md:-translate-x-1/2"
+      >
         <motion.div
           layout
           transition={{
@@ -53,7 +47,7 @@ const Toolbar = () => {
             stiffness: 300,
             damping: 30,
           }}
-          className="flex gap-1 "
+          className="flex gap-1"
         >
           {tools.map(({ id, icon: Icon, label }) => (
             <Tool key={id} id={id} icon={Icon} label={label} />

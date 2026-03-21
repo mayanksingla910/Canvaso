@@ -72,7 +72,7 @@ function HistoryButtons() {
                   size="icon"
                   variant="ghost"
                   disabled={disabled}
-                  className="size-8 rounded-full"
+                  className="md:size-8 size-10 rounded-full"
                   aria-label={label}
                   onClick={(e) => onClick(e)}
                 >

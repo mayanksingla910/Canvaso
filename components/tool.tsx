@@ -25,6 +25,7 @@ const Tool = ({ id, icon: Icon, label }: ToolProps) => {
             size="icon"
             aria-label={id}
             onClick={() => setSelectedTool(id)}
+            className="size-10 md:size-8"
           >
             <Icon />
           </Button>

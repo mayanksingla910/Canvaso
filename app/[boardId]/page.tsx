@@ -1,13 +1,13 @@
-import Footer from "@/components/boardFooter";
 import Canvas from "@/components/canvas";
 import Toolbar from "@/components/toolbar";
+import ToolsSidebar from "@/components/ToolsSidebar";
 
 function Page() {
   return (
-    <div className="h-screen relative">
+    <div className="h-screen relative overflow-hidden">
       <Toolbar />
+      <ToolsSidebar />
       <Canvas />
-      <Footer />
     </div>
   );
 }
