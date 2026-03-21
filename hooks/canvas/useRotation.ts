@@ -10,15 +10,16 @@ interface RotationState {
   elementIds: string[] | null;
   centerX: number;
   centerY: number;
-  startAngle: number; // angle from center to mouse at drag start
+  startAngle: number;
   initialStates: Record<
     string,
     {
-      cx: number; // element center x at drag start
-      cy: number; // element center y at drag start
-      hw: number; // half width — constant, snapshot once
+      cx: number;
+      cy: number;
+      hw: number;
       hh: number;
       angle: number;
+      points?: Point[];
     }
   >;
 }
@@ -37,7 +38,7 @@ function useRotation(getCanvasPoint: (e: React.MouseEvent) => Point) {
 
   const startRotation = useCallback(
     (e: React.MouseEvent) => {
-      const { elements, selectedIds } = useCanvasStore.getState();
+      const { elements, selectedIds, viewport } = useCanvasStore.getState();
       const canvasPoint = getCanvasPoint(e);
 
       const selectedElements = Object.values(elements).filter((el) =>
@@ -56,7 +57,7 @@ function useRotation(getCanvasPoint: (e: React.MouseEvent) => Point) {
 
       const angle =
         selectedElements.length === 1 ? (selectedElements[0].angle ?? 0) : 0;
-      if (!hitTestRotationHandle(canvasPoint, sides, angle)) return false;
+      if (!hitTestRotationHandle(canvasPoint, sides, angle, viewport.zoom)) return false;
 
       const cx = (sides.left + sides.right) / 2;
       const cy = (sides.top + sides.bottom) / 2;
@@ -82,6 +83,10 @@ function useRotation(getCanvasPoint: (e: React.MouseEvent) => Point) {
                 hw: (b.right - b.left) / 2,
                 hh: (b.bottom - b.top) / 2,
                 angle: el.angle ?? 0,
+                points:
+                  el.type === "pen" || el.type === "line" || el.type === "arrow"
+                    ? el.points.map((p) => ({ ...p }))
+                    : undefined,
               },
             ];
           }),
@@ -107,9 +112,10 @@ function useRotation(getCanvasPoint: (e: React.MouseEvent) => Point) {
         startAngle;
 
       if (e.shiftKey) {
-        const snap = Math.PI / 12; // 15°
+        const snap = Math.PI / 12;
         deltaAngle = Math.round(deltaAngle / snap) * snap;
       }
+
 
       const cos = Math.cos(deltaAngle);
       const sin = Math.sin(deltaAngle);
@@ -118,16 +124,34 @@ function useRotation(getCanvasPoint: (e: React.MouseEvent) => Point) {
         const init = initialStates[id];
         if (!init) return;
 
+        const el = useCanvasStore.getState().elements[id];
+        if (!el) return;
+
         const dx = init.cx - centerX;
         const dy = init.cy - centerY;
         const newCx = centerX + dx * cos - dy * sin;
         const newCy = centerY + dx * sin + dy * cos;
 
-        useCanvasStore.getState().updateElement(id, {
-          x: newCx - init.hw,
-          y: newCy - init.hh,
-          angle: init.angle + deltaAngle,
-        });
+        const newAngle = init.angle + deltaAngle;
+
+        if (el.type === "arrow" || el.type === "line" || el.type === "pen") {
+          if (!init.points) return false;
+          const pointDx = newCx - init.cx;
+          const pointDy = newCy - init.cy;
+          useCanvasStore.getState().updateElement(id, {
+            points: init.points.map((p) => ({
+              x: p.x + pointDx,
+              y: p.y + pointDy,
+            })),
+            angle: newAngle,
+          });
+        } else {
+          useCanvasStore.getState().updateElement(id, {
+            x: newCx - init.hw,
+            y: newCy - init.hh,
+            angle: newAngle,
+          });
+        }
       });
       return true;
     },

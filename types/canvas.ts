@@ -54,7 +54,7 @@ export const BaseElementSchema = z.object({
 
 export const RectElementSchema = BaseElementSchema.extend({
   type: z.literal("rect"),
-  cornerRadius: z.number().min(2).default(2),
+  cornerRadius: z.number().min(0).default(20),
 });
 
 export const CircleElementSchema = BaseElementSchema.extend({
@@ -63,7 +63,7 @@ export const CircleElementSchema = BaseElementSchema.extend({
 
 export const DiamondElementSchema = BaseElementSchema.extend({
   type: z.literal("diamond"),
-  cornerRadius: z.number().min(2).default(2),
+  cornerRadius: z.number().min(0).default(20),
 });
 
 export const LineElementSchema = BaseElementSchema.extend({
@@ -198,9 +198,9 @@ export function createElement<T extends CanvasElement["type"]>(
           isEditing: true, // immediately enter edit mode
         };
       case "rect":
-        return { cornerRadius: 30 };
+        return { cornerRadius: 20 };
       case "diamond":
-        return { cornerRadius: 30 };
+        return { cornerRadius: 20 };
       case "image":
         return { src: "", naturalWidth: 0, naturalHeight: 0, crop: null };
       case "frame":
