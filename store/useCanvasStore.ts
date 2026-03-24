@@ -5,12 +5,13 @@ type CanvasStore = {
   elements: Record<string, CanvasElement>;
   addElement: (el: CanvasElement) => void;
   updateElement: (id: string, changes: Partial<CanvasElement>) => void;
+  updateSelected: (patch: Partial<CanvasElement>) => void;
+
   deleteElement: (id: string) => void;
   deleteSelected: () => void;
 
   viewport: Viewport;
   setViewport: (viewport: Viewport) => void;
-
 
   selectedIds: string[];
   setSelectedIds: (ids: string[]) => void;
@@ -47,6 +48,13 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
       };
     }),
 
+  updateSelected: (patch: Partial<CanvasElement>) => {
+    const { selectedIds } = get();
+    selectedIds.forEach((id) => {
+      if (get().elements[id]) get().updateElement(id, patch as never);
+    });
+  },
+
   deleteElement: (id) =>
     set((s) => {
       const { [id]: _, ...rest } = s.elements;
@@ -62,7 +70,6 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
 
   viewport: { x: 0, y: 0, zoom: 1 },
   setViewport: (viewport) => set({ viewport }),
-
 
   selectedIds: [],
   setSelectedIds: (ids) => set({ selectedIds: ids }),

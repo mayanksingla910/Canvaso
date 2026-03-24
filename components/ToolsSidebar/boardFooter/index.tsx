@@ -19,8 +19,7 @@ function Footer() {
 
   return (
     <div
-      className="z-20
-      flex items-center gap-3"
+      className="z-20 flex items-center gap-3"
     >
       <Counter
         number={zoomPercent}

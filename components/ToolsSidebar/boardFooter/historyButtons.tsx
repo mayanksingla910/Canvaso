@@ -6,9 +6,9 @@ import {
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "../ui/tooltip";
+} from "../../ui/tooltip";
 import { motion } from "motion/react";
-import { Button } from "../ui/button";
+import { Button } from "../../ui/button";
 import { useCanvasStore } from "@/store/useCanvasStore";
 import { MouseEvent, ReactNode } from "react";
 import { useShallow } from "zustand/shallow";
@@ -28,8 +28,8 @@ function HistoryButtons() {
       history: s.history,
       undo: s.undo,
       redo: s.redo,
-    }))
-    );
+    })),
+  );
 
   const buttons: HistoryButton[] = [
     {

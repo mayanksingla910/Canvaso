@@ -15,6 +15,14 @@ interface ToolProps {
 const Tool = ({ id, icon: Icon, label }: ToolProps) => {
   const selectedTool = useToolStore((state) => state.selectedTool);
   const setSelectedTool = useToolStore((state) => state.setSelectedTool);
+  const setOpenSidebar = useToolStore((state) => state.setOpenSidebar);
+
+  const handleClick = () => {
+    setSelectedTool(id);
+
+    if(id === "select" || id === "hand") setOpenSidebar(false);
+    else setOpenSidebar(true);
+  };
 
   return (
     <Tooltip>
@@ -24,8 +32,8 @@ const Tool = ({ id, icon: Icon, label }: ToolProps) => {
             variant={selectedTool === id ? "default" : "ghost"}
             size="icon"
             aria-label={id}
-            onClick={() => setSelectedTool(id)}
-            className="size-10 md:size-8"
+            onClick={() => handleClick()}
+            className="size-10 md:size-8 rounded-full"
           >
             <Icon />
           </Button>

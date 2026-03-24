@@ -10,9 +10,18 @@ import {
 import { motion } from "motion/react";
 import { useState } from "react";
 import { ToggleTypeOptions } from "./ToolOptions";
+import { DefaultStyles } from "@/store/useToolStore";
+import { useApplyStyle, useCurrentStyle } from "@/hooks/useStyleState";
 
-function ToggleOptions({ items }: { items: ToggleTypeOptions[] }) {
-  const [selected, setSelected] = useState<string>(String(items[0].value));
+interface props {
+  items: ToggleTypeOptions[];
+  styleKey: keyof DefaultStyles;
+}
+
+function ToggleOptions({ items, styleKey }: props) {
+  const apply = useApplyStyle();
+  const current = useCurrentStyle(styleKey);
+  const selected = current !== undefined ? String(current) : "";
 
   return (
     <TooltipProvider delayDuration={1000}>
@@ -22,7 +31,7 @@ function ToggleOptions({ items }: { items: ToggleTypeOptions[] }) {
           type="single"
           value={selected}
           onValueChange={(v) => {
-            if (v) setSelected(v);
+            if (v) apply(styleKey, v);
           }}
           className="flex-wrap gap-1"
         >

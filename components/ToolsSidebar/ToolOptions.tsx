@@ -90,9 +90,9 @@ export const StrokeOptions: StrokeOptions[] = [
     label: "Stroke Width",
     type: "toggle",
     options: [
-      { label: "Thin", value: 1, icon: <Minus strokeWidth={1.5} /> },
-      { label: "Bold", value: 2, icon: <Minus strokeWidth={2.5} /> },
-      { label: "Extra Bold", value: 3, icon: <Minus strokeWidth={4} /> },
+      { label: "Thin", value: 1.5, icon: <Minus strokeWidth={1.5} /> },
+      { label: "Bold", value: 2.5, icon: <Minus strokeWidth={2.5} /> },
+      { label: "Extra Bold", value: 4, icon: <Minus strokeWidth={4} /> },
     ],
   },
   {
@@ -121,11 +121,11 @@ export const StrokeOptions: StrokeOptions[] = [
 export const MoreOptions = [
   {
     label: "Opacity",
-    settings: { min: 0, max: 100, step: 10, defaultValue: 100 },
+    settings: { min: 0, max: 100, step: 5, defaultValue: 100 },
   },
   {
     label: "Rounded Edges",
-    settings: { min: 0, max: 40, step: 5, defaultValue: 20 },
+    settings: { min: 0, max: 40, step: 2, defaultValue: 20 },
   },
 ];
 

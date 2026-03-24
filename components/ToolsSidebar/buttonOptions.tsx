@@ -17,11 +17,12 @@ function ButtonOptions({ items }: { items: ActionOptions[] }) {
           <Tooltip key={item.label}>
             <TooltipTrigger asChild>
               <motion.button
+              layout
                 whileTap={{ scale: 0.95 }}
                 whileHover={{ scale: 1.1 }}
                 transition={{
                   type: "spring",
-                  stiffness: 400,
+                  stiffness: 200,
                   damping: 20,
                   duration: 0.1,
                 }}

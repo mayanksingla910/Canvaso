@@ -1,26 +1,42 @@
 "use client";
 
-import { useState } from "react";
 import { Slider } from "../ui/slider";
 import { SliderTypeSettings } from "./ToolOptions";
+import { DefaultStyles } from "@/store/useToolStore";
+import { useApplyStyle, useCurrentStyle } from "@/hooks/useStyleState";
 
-function SliderOption({ items }: { items: SliderTypeSettings }) {
+interface props {
+  items: SliderTypeSettings;
+  styleKey: keyof DefaultStyles;
+}
+
+function SliderOption({ items, styleKey }: props)  {
   const { min, max, step, defaultValue } = items;
-  const [value, setValue] = useState([defaultValue]);
+  const apply   = useApplyStyle();
+  const current = useCurrentStyle(styleKey);
+ 
+  const isOpacity = styleKey === "opacity";
+  const rawValue  = current !== undefined ? Number(current) : defaultValue;
+  const displayValue = isOpacity ? Math.round(rawValue * 100) : rawValue;
+ 
+  const handleChange = (val: number[]) => {
+    const v = val[0]
+    apply(styleKey, isOpacity ? v / 100 : v)
+  }
+ 
   return (
-    <div className="w-48 space-y-2 mt-1 ">
+    <div className="w-48 space-y-2 mt-1">
       <Slider
-        value={value}
-        onValueChange={setValue}
+        value={[displayValue]}
+        onValueChange={handleChange}
         min={min}
         max={max}
-        defaultValue={[defaultValue]}
         step={step}
         className="cursor-pointer"
       />
       <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
         <span>{min}</span>
-        <span>{value[0]}</span>
+        <span>{displayValue}{isOpacity ? "%" : ""}</span>
       </div>
     </div>
   );

@@ -118,7 +118,10 @@ function applyStrokeStyle(
   el: CanvasElement,
   theme: ReturnType<typeof getCanvasTheme>,
 ) {
-  ctx.strokeStyle = theme.strokeColor ?? el.strokeColor;
+  ctx.strokeStyle =
+    el.strokeColor === "var(--foreground)" || !el.strokeColor
+      ? theme.strokeColor
+      : el.strokeColor;
   ctx.fillStyle =
     el.fillColor == "transparent" ? "rgba(0,0,0,0)" : el.fillColor;
   ctx.lineWidth = el.strokeWidth;

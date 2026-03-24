@@ -5,13 +5,13 @@ import { type HTMLMotionProps, motion, type SpringOptions } from "motion/react";
 import * as React from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { SlidingNumber, SlidingNumberProps } from "../ui/slidingNumber";
+import { SlidingNumber, SlidingNumberProps } from "../../ui/slidingNumber";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "../ui/tooltip";
+} from "../../ui/tooltip";
 
 export interface CounterProps extends Omit<HTMLMotionProps<"div">, "children"> {
   number: number;

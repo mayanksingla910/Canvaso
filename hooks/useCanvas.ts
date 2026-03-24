@@ -64,7 +64,7 @@ export function useCanvas() {
   const { elements, viewport, selectedIds, setSelectedIds, clearSelection } =
     useCanvasStore();
 
-  const { selectedTool } = useToolStore();
+  const { selectedTool, setOpenSidebar } = useToolStore();
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -99,8 +99,16 @@ export function useCanvas() {
   }, []);
 
   useEffect(() => {
-    if (selectedTool !== "select") setSelectedIds([]);
-  }, [selectedTool, setSelectedIds]);
+    if (selectedTool !== "select") {
+      setSelectedIds([]);
+    }
+  }, [selectedTool, setSelectedIds, setOpenSidebar]);
+
+  useEffect(() => {
+    if (selectedTool === "select") {
+      setOpenSidebar(selectedIds.length > 0);
+    }
+  }, [selectedIds.length, selectedTool, setOpenSidebar]);
 
   const onMouseDown = useCallback(
     (e: React.MouseEvent) => {

@@ -1,12 +1,26 @@
 "use client";
 
 import { useState } from "react";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../ui/tooltip";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "../ui/tooltip";
 import { motion } from "motion/react";
 import { ToggleTypeOptions } from "./ToolOptions";
+import { DefaultStyles } from "@/store/useToolStore";
+import { useApplyStyle, useCurrentStyle } from "@/hooks/useStyleState";
 
-function ColorOption({items} : {items: ToggleTypeOptions[]}) {
-  const [selected, setSelected] = useState<string>(String(items[0].value));
+interface props {
+  items: ToggleTypeOptions[];
+  styleKey: keyof DefaultStyles;
+}
+
+function ColorOption({ items, styleKey }: props) {
+  const apply = useApplyStyle();
+  const current = useCurrentStyle(styleKey);
+  const selected = current !== undefined ? String(current) : undefined;
 
   return (
     <TooltipProvider delayDuration={1000}>
@@ -20,13 +34,13 @@ function ColorOption({items} : {items: ToggleTypeOptions[]}) {
             <Tooltip key={val}>
               <TooltipTrigger asChild>
                 <motion.button
-                  onClick={() => setSelected(val)}
+                  onClick={() => apply(styleKey, item.value)}
                   animate={{ scale: isSelected ? 1.15 : 1 }}
                   whileHover={{ scale: isSelected ? 1.15 : 1.1 }}
                   whileTap={{ scale: 0.93 }}
                   transition={{
                     type: "spring",
-                    stiffness: 400,
+                    stiffness: 200,
                     damping: 20,
                     duration: 0.1,
                   }}
@@ -47,7 +61,6 @@ function ColorOption({items} : {items: ToggleTypeOptions[]}) {
                     backgroundColor: isTransparent ? undefined : val,
                   }}
                 >
-                  {/* Transparent = diagonal strike */}
                   {isTransparent && (
                     <svg
                       className="absolute inset-0 w-full h-full rounded-md"
