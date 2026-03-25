@@ -35,6 +35,18 @@ export function useCanvas() {
       ),
     [],
   );
+
+  const getTouchPoint = useCallback(
+    (e: React.TouchEvent | TouchEvent): Point => {
+      const touch = e.touches[0] ?? (e as TouchEvent).changedTouches[0];
+      return screenToCanvas(
+        { x: touch.clientX, y: touch.clientY },
+        useCanvasStore.getState().viewport,
+      );
+    },
+    [],
+  );
+
   const {
     isPanning,
     startPanning,
@@ -65,6 +77,14 @@ export function useCanvas() {
     useCanvasStore();
 
   const { selectedTool, setOpenSidebar } = useToolStore();
+
+  const modifierDefaults = {
+    shiftKey: false,
+    ctrlKey: false,
+    metaKey: false,
+    altKey: false,
+    button: 0,
+  };
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -330,10 +350,10 @@ export function useCanvas() {
       if (e.key === "Delete" || e.key === "Backspace") {
         useCanvasStore.getState().deleteSelected();
       }
-      if(e.key === "c" && e.ctrlKey){
+      if (e.key === "c" && e.ctrlKey) {
         useCanvasStore.getState().copySelected();
       }
-      if(e.key === "v" && e.ctrlKey){
+      if (e.key === "v" && e.ctrlKey) {
         useCanvasStore.getState().pasteElement();
       }
       if (e.key === "Escape") {
@@ -344,6 +364,46 @@ export function useCanvas() {
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [clearSelection]);
+
+  const onTouchStart = useCallback(
+    (e: React.TouchEvent) => {
+      e.preventDefault();
+      if (e.touches.length !== 1) return; // ignore multi-touch for now
+
+      const touch = e.touches[0];
+      onMouseDown({
+        ...modifierDefaults,
+        clientX: touch.clientX,
+        clientY: touch.clientY,
+        preventDefault: () => {},
+      } as unknown as React.MouseEvent);
+    },
+    [onMouseDown],
+  );
+
+  const onTouchMove = useCallback(
+    (e: React.TouchEvent) => {
+      e.preventDefault();
+      if (e.touches.length !== 1) return;
+
+      const touch = e.touches[0];
+      onMouseMove({
+        ...modifierDefaults,
+        clientX: touch.clientX,
+        clientY: touch.clientY,
+        preventDefault: () => {},
+      } as unknown as React.MouseEvent);
+    },
+    [onMouseMove],
+  );
+
+  const onTouchEnd = useCallback(
+    (e: React.TouchEvent) => {
+      e.preventDefault();
+      onMouseUp();
+    },
+    [onMouseUp],
+  );
 
   // ── Cursor style ──────────────────────────────────────────────────────────────
 
@@ -371,11 +431,14 @@ export function useCanvas() {
   ]);
 
   return {
-    canvasRef,
-    onMouseDown,
-    onMouseMove,
-    onMouseUp,
-    onMouseLeave,
-    getCursor,
-  };
+  canvasRef,
+  onMouseDown,
+  onMouseMove,
+  onMouseUp,
+  onMouseLeave,
+  onTouchStart,
+  onTouchMove,
+  onTouchEnd,
+  getCursor,
+}
 }
