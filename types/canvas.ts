@@ -230,7 +230,7 @@ export function createElement<T extends CanvasElement["type"]>(
   return CanvasElementSchema.parse(base) as Extract<CanvasElement, { type: T }>;
 }
 
-function generateId(): string {
+export function generateId(): string {
   if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
     return crypto.randomUUID()
   }

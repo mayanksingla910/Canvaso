@@ -330,6 +330,12 @@ export function useCanvas() {
       if (e.key === "Delete" || e.key === "Backspace") {
         useCanvasStore.getState().deleteSelected();
       }
+      if(e.key === "c" && e.ctrlKey){
+        useCanvasStore.getState().copySelected();
+      }
+      if(e.key === "v" && e.ctrlKey){
+        useCanvasStore.getState().pasteElement();
+      }
       if (e.key === "Escape") {
         clearSelection();
       }

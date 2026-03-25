@@ -6,7 +6,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html className="dark" lang="en">
+    <html className="" lang="en">
       <body className={`antialiased`}>{children}</body>
     </html>
   );

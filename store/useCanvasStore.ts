@@ -1,4 +1,4 @@
-import { CanvasElement, Viewport } from "@/types/canvas";
+import { CanvasElement, generateId, Viewport } from "@/types/canvas";
 import { create } from "zustand";
 
 type CanvasStore = {
@@ -6,6 +6,10 @@ type CanvasStore = {
   addElement: (el: CanvasElement) => void;
   updateElement: (id: string, changes: Partial<CanvasElement>) => void;
   updateSelected: (patch: Partial<CanvasElement>) => void;
+
+  clipboard: CanvasElement[];
+  copySelected: () => void;
+  pasteElement: () => void;
 
   deleteElement: (id: string) => void;
   deleteSelected: () => void;
@@ -49,10 +53,53 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
     }),
 
   updateSelected: (patch: Partial<CanvasElement>) => {
-    const { selectedIds } = get();
-    selectedIds.forEach((id) => {
-      if (get().elements[id]) get().updateElement(id, patch as never);
+    set((s) => {
+      const updated = { ...s.elements };
+      for (const id of s.selectedIds) {
+        if (updated[id]) {
+          updated[id] = {
+            ...updated[id],
+            ...patch,
+            updatedAt: Date.now(),
+          } as CanvasElement;
+        }
+      }
+      return { elements: updated };
     });
+  },
+  clipboard: [],
+
+  copySelected: () => {
+    const { selectedIds, elements } = get();
+    const copied = selectedIds.flatMap((id) =>
+      elements[id] ? [elements[id]] : [],
+    );
+    set({ clipboard: copied });
+  },
+
+  pasteElement: () => {
+    const { clipboard } = get();
+    if (!clipboard.length) return;
+
+    const idMap = new Map(clipboard.map((el) => [el.id, crypto.randomUUID()]));
+
+    const newElements = clipboard.map((el) => ({
+      ...el,
+      id: idMap.get(el.id)!,
+      x: el.x + 5,
+      y: el.y + 5,
+      updatedAt: Date.now(),
+    }));
+
+    set((s) => {
+      const added = Object.fromEntries(newElements.map((el) => [el.id, el]));
+      return {
+        elements: { ...s.elements, ...added },
+        selectedIds: newElements.map((el) => el.id),
+        clipboard: newElements,
+      };
+    });
+    get().pushHistory();
   },
 
   deleteElement: (id) =>

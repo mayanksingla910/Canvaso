@@ -40,13 +40,21 @@ function useDrawing(getCanvasPoint: (e: React.MouseEvent) => Point) {
 
       if (!drawableTools.includes(selectedTool as DrawableTool)) return;
 
+      const { defaultStyles } = useToolStore.getState();
+      const { cornerRadius, ...baseStyles } = defaultStyles;
+
+      const typeSpecificStyles =
+        selectedTool === "rect" || selectedTool === "diamond"
+          ? { ...baseStyles, cornerRadius }
+          : baseStyles;
+
       const newElement = createElement(selectedTool as DrawableTool, {
         x: canvasPoint.x,
         y: canvasPoint.y,
         width: 0,
         height: 0,
+        ...typeSpecificStyles,
       });
-
       addElement(newElement);
       drawing.current = {
         isDrawing: true,

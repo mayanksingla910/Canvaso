@@ -1,6 +1,7 @@
 import { ReactNode } from "react";
 import ColorIcon from "./colorIcon";
 import { Copy, Minus, Trash2 } from "lucide-react";
+import { useCanvasStore } from "@/store/useCanvasStore";
 
 export interface ToggleTypeOptions {
   label: string;
@@ -23,6 +24,7 @@ export interface SliderTypeSettings {
 export interface ActionOptions {
   label: string;
   icon: ReactNode;
+  disabled?: boolean;
   onClick: () => void;
 }
 
@@ -133,11 +135,14 @@ export const ActionOptions: ActionOptions[] = [
   {
     label: "Delete",
     icon: <Trash2 className="size-4" />,
-    onClick: () => console.log("delete"),
+    onClick: () => useCanvasStore.getState().deleteSelected(),
   },
   {
     label: "Duplicate",
     icon: <Copy className="size-4" />,
-    onClick: () => console.log("duplicate"),
+    onClick: () => {
+      useCanvasStore.getState().copySelected();
+      useCanvasStore.getState().pasteElement();
+    },
   },
 ];

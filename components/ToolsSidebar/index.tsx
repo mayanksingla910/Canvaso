@@ -84,7 +84,7 @@ function ToolsSidebar() {
               className="pointer-events-auto flex-col bg-card border border-border rounded-xl shadow-md
               lg:w-56 w-14 overflow-hidden"
             >
-              <ScrollArea className="flex-1">
+              <ScrollArea className="flex-1 h-full">
                 <div className="flex flex-col gap-4 lg:gap-6 lg:items-start items-center lg:px-3 py-4 lg:py-6">
                   <div className="lg:hidden">
                     <SmallScreenSidebar selectedElements={selectedElements} />
@@ -176,7 +176,7 @@ function ToolsSidebar() {
             </motion.div>
           )}
         </AnimatePresence>
-        <div className={`mt-auto`}>
+        <div className={`mt-auto pointer-events-auto`}>
           <Footer />
         </div>
       </div>
