@@ -65,8 +65,8 @@ function HistoryButtons() {
           <Tooltip key={id}>
             <TooltipTrigger asChild>
               <motion.div
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
+                whileHover={disabled ? undefined : { scale: 1.1 }}
+                whileTap={ disabled ? undefined : { scale: 0.95 }}
               >
                 <Button
                   size="icon"

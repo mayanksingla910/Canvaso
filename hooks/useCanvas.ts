@@ -368,7 +368,7 @@ export function useCanvas() {
   const onTouchStart = useCallback(
     (e: React.TouchEvent) => {
       e.preventDefault();
-      if (e.touches.length !== 1) return; // ignore multi-touch for now
+      if (e.touches.length !== 1) return;
 
       const touch = e.touches[0];
       onMouseDown({
