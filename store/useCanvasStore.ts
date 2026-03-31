@@ -1,4 +1,4 @@
-import { CanvasElement, generateId, Viewport } from "@/types/canvas";
+import { CanvasElement, Viewport } from "@/types/canvas";
 import { create } from "zustand";
 
 type CanvasStore = {
@@ -27,6 +27,8 @@ type CanvasStore = {
   pushHistory: () => void;
   undo: () => void;
   redo: () => void;
+
+  loadState: (state: Record<string, CanvasElement>) => void;
 };
 
 export const useCanvasStore = create<CanvasStore>((set, get) => ({
@@ -154,4 +156,8 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
       historyIndex: s.historyIndex + 1,
     }));
   },
+
+loadState: (state) => {
+  set({ elements: state, selectedIds: [], history: [], historyIndex: -1 })
+}
 }));
