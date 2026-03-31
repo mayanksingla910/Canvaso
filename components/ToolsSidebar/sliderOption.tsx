@@ -4,6 +4,7 @@ import { Slider } from "../ui/slider";
 import { SliderTypeSettings } from "./ToolOptions";
 import { DefaultStyles } from "@/store/useToolStore";
 import { useApplyStyle, useCurrentStyle } from "@/hooks/useStyleState";
+import { useCanvasStore } from "@/store/useCanvasStore";
 
 interface props {
   items: SliderTypeSettings;
@@ -22,6 +23,7 @@ function SliderOption({ items, styleKey }: props)  {
   const handleChange = (val: number[]) => {
     const v = val[0]
     apply(styleKey, isOpacity ? v / 100 : v)
+    useCanvasStore.getState().pushHistory();
   }
  
   return (

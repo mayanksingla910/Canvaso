@@ -1,5 +1,7 @@
+import BoardPage from "./[boardId]/page";
+
 function Home() {
-  return <div></div>;
+  return <BoardPage />;
 }
 
 export default Home;

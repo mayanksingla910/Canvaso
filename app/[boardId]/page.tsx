@@ -2,7 +2,7 @@ import Canvas from "@/components/canvas";
 import Toolbar from "@/components/toolbar";
 import ToolsSidebar from "@/components/ToolsSidebar";
 
-function Page() {
+function BoardPage() {
   return (
     <div className="h-screen relative overflow-hidden">
       <Toolbar />
@@ -12,4 +12,4 @@ function Page() {
   );
 }
 
-export default Page;
+export default BoardPage;

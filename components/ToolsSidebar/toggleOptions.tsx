@@ -12,6 +12,7 @@ import { useState } from "react";
 import { ToggleTypeOptions } from "./ToolOptions";
 import { DefaultStyles } from "@/store/useToolStore";
 import { useApplyStyle, useCurrentStyle } from "@/hooks/useStyleState";
+import { useCanvasStore } from "@/store/useCanvasStore";
 
 interface props {
   items: ToggleTypeOptions[];
@@ -31,7 +32,7 @@ function ToggleOptions({ items, styleKey }: props) {
           type="single"
           value={selected}
           onValueChange={(v) => {
-            if (v) apply(styleKey, v);
+            if (v) {apply(styleKey, v); useCanvasStore.getState().pushHistory()};
           }}
           className="flex-wrap gap-1"
         >

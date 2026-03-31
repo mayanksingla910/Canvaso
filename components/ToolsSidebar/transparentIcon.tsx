@@ -1,7 +1,7 @@
 import { useId } from "react"
 
 function TransparentIcon() {
-  const id = useId() // from React
+  const id = useId() 
   const patternId = `checker-${id}`
 
   return (

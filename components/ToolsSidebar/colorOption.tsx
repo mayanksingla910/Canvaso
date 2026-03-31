@@ -10,6 +10,7 @@ import { motion } from "motion/react";
 import { ToggleTypeOptions } from "./ToolOptions";
 import { DefaultStyles } from "@/store/useToolStore";
 import { useApplyStyle, useCurrentStyle } from "@/hooks/useStyleState";
+import { useCanvasStore } from "@/store/useCanvasStore";
 
 interface props {
   items: ToggleTypeOptions[];
@@ -33,7 +34,10 @@ function ColorOption({ items, styleKey }: props) {
             <Tooltip key={val}>
               <TooltipTrigger asChild>
                 <motion.button
-                  onClick={() => apply(styleKey, item.value)}
+                  onClick={() => {
+                    apply(styleKey, item.value);
+                    useCanvasStore.getState().pushHistory();
+                  }}
                   animate={{ scale: isSelected ? 1.15 : 1 }}
                   whileHover={{ scale: isSelected ? 1.15 : 1.1 }}
                   whileTap={{ scale: 0.93 }}
