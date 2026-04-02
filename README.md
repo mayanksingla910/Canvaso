@@ -1,36 +1,141 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🎨 Canvaso
 
-## Getting Started
+Canvaso is a real-time collaborative drawing application built for brainstorming, designing, and visual thinking. It combines an intuitive canvas experience with multi-board management and live collaboration.
 
-First, run the development server:
+> Inspired by modern whiteboarding tools, but designed with a more structured workflow and cleaner UI.
+
+---
+
+## 🚀 Features
+
+### 🖌️ Drawing Tools
+- Freehand (pen)
+- Rectangle, Ellipse, Diamond
+- Line & Arrow
+- Selection & Pan tools
+
+### ⚡ Core Capabilities
+- Undo / Redo support  
+- Zoom & Pan interactions  
+- Keyboard shortcuts for faster workflow  
+- Persistent storage of boards  
+- Real-time collaboration using WebSockets  
+
+### 🧠 Board Management
+- Create and manage multiple boards  
+- Dashboard interface for organizing work  
+
+### 🎨 Styling
+- Basic styling options for elements  
+- Shape customization (ongoing improvements)
+
+---
+
+## 🛠️ Tech Stack
+
+### Frontend
+- Next.js
+- React
+- Tailwind CSS
+- shadcn/ui
+- Framer Motion
+
+### State & Forms
+- Zustand (state management)
+- React Hook Form
+- Zod (validation)
+
+### Canvas & Rendering
+- HTML Canvas API (custom rendering engine)
+
+### Backend & Infra
+- Node.js (via Next.js API routes)
+- Prisma ORM
+- Neon DB (PostgreSQL)
+- BetterAuth (authentication)
+
+### Realtime
+- WebSockets (for live collaboration)
+
+---
+
+## ⚙️ How It Works
+
+- Canvaso uses the HTML Canvas API to render drawable elements.
+- Each shape is stored as a structured object (JSON-like format), enabling persistence and real-time syncing.
+- Rendering is selectively updated rather than fully redrawn every time, improving performance.
+- State is managed using Zustand to minimize unnecessary re-renders.
+- Real-time collaboration is handled via WebSockets, syncing canvas state across clients.
+
+---
+
+## 📦 Setup & Installation
+
+```bash
+# Clone the repository
+git clone https://github.com/your-username/canvaso.git
+
+# Navigate into the project
+cd canvaso
+
+# Install dependencies
+npm install
+```
+
+### 🔑 Environment Variables
+
+Create a `.env` file and add key values like in `example.env`
+
+### ⚙️ Prisma Setup
+
+```bash
+npx prisma generate
+npx prisma migrate dev
+```
+
+### ▶️ Run the app
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+---
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 🌐 Live Demo
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+👉 [View Canvaso Live](http://mycanvaso.vercel.app)
 
-## Learn More
+---
 
-To learn more about Next.js, take a look at the following resources:
+## 🗺️ Roadmap
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- Improve real-time collaboration smoothness  
+- Advanced styling (alignment, snapping, grouping)  
+- Text and image tools  
+- Mobile support with multi-touch gestures  
+- Performance optimizations for large boards  
+- Layer management system  
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+---
 
-## Deploy on Vercel
+## ⚠️ Challenges & Learnings
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- Handling element resizing and transformations on canvas  
+- Managing efficient rendering without redrawing everything  
+- Understanding low-level Canvas API behavior  
+- Designing a scalable structure for real-time sync  
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+---
+
+## 🙌 Inspiration
+
+Canvaso is heavily inspired by tools like Excalidraw, but aims to improve:
+- Structured board management (dashboard system)
+- Cleaner and more intuitive UI
+- Better organization for multiple projects
+
+---
+
+## 📄 License
+
+This project is open-source and available under the MIT License.
