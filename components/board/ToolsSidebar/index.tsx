@@ -1,12 +1,12 @@
 "use client";
 import { DefaultStyles, useToolStore } from "@/store/useToolStore";
 import { AnimatePresence, motion } from "motion/react";
-import { ScrollArea } from "../ui/scroll-area";
+import { ScrollArea } from "../../ui/scroll-area";
 import ToggleOptions from "./toggleOptions";
 import SliderOption from "./sliderOption";
 import ButtonOptions from "./buttonOptions";
 import ColorOption from "./colorOption";
-import { Label } from "../ui/label";
+import { Label } from "../../ui/label";
 import {
   ActionOptions,
   ColorOptions,
@@ -19,11 +19,11 @@ import Footer from "./boardFooter";
 import { useCanvasStore } from "@/store/useCanvasStore";
 
 export const STYLE_KEY_MAP: Record<string, string> = {
-  "Fill": "fillColor",
+  Fill: "fillColor",
   "Stroke Color": "strokeColor",
   "Stroke Width": "strokeWidth",
   "Stroke Style": "strokeStyle",
-  "Opacity": "opacity",
+  Opacity: "opacity",
   "Rounded Edges": "cornerRadius",
 };
 

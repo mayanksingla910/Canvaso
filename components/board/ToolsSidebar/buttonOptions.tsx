@@ -6,7 +6,7 @@ import {
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "../ui/tooltip";
+} from "../../ui/tooltip";
 import { ActionOptions } from "./ToolOptions";
 import { useCanvasStore } from "@/store/useCanvasStore";
 
@@ -22,7 +22,7 @@ function ButtonOptions({ items }: { items: ActionOptions[] }) {
               <motion.button
                 layout
                 onClick={item.onClick}
-                disabled={!hasSelection} 
+                disabled={!hasSelection}
                 whileTap={hasSelection ? { scale: 0.95 } : undefined}
                 whileHover={hasSelection ? { scale: 1.1 } : undefined}
                 transition={{

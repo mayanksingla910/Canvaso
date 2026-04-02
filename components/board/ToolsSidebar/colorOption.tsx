@@ -5,7 +5,7 @@ import {
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "../ui/tooltip";
+} from "../../ui/tooltip";
 import { motion } from "motion/react";
 import { ToggleTypeOptions } from "./ToolOptions";
 import { DefaultStyles } from "@/store/useToolStore";

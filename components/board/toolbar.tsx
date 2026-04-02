@@ -10,10 +10,10 @@ import {
   RectangleHorizontal,
   Diamond,
 } from "lucide-react";
-import { Card } from "./ui/card";
+import { Card } from "../ui/card";
 import Tool from "./tool";
 import { ToolType } from "@/types/tool";
-import { TooltipProvider } from "./ui/tooltip";
+import { TooltipProvider } from "../ui/tooltip";
 import { motion } from "motion/react";
 
 const tools: {

@@ -1,7 +1,7 @@
 "use State";
-import { Popover, PopoverTrigger, PopoverContent } from "../ui/popover";
+import { Popover, PopoverTrigger, PopoverContent } from "../../ui/popover";
 import { AnimatePresence, motion } from "motion/react";
-import { Label } from "../ui/label";
+import { Label } from "../../ui/label";
 import {
   SliderTypeSettings,
   ColorOptions,
@@ -55,7 +55,9 @@ function SmallScreenSidebar({
                   duration: 0.1,
                 }}
                 className="block lg:hidden overflow-hidden bg-transparent border border-dashed cursor-pointer w-10 h-10 rounded-full "
-              ><TransparentIcon /></motion.div>
+              >
+                <TransparentIcon />
+              </motion.div>
             </PopoverTrigger>
             <PopoverContent
               side={isMobile ? "top" : "right"}

@@ -1,9 +1,9 @@
 "use client";
 
 import { ToolType } from "@/types/tool";
-import { Button } from "./ui/button";
+import { Button } from "../ui/button";
 import { useToolStore } from "@/store/useToolStore";
-import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 import { motion } from "motion/react";
 
 interface ToolProps {

@@ -6,9 +6,9 @@ import {
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "../../ui/tooltip";
+} from "../../../ui/tooltip";
 import { motion } from "motion/react";
-import { Button } from "../../ui/button";
+import { Button } from "../../../ui/button";
 import { useCanvasStore } from "@/store/useCanvasStore";
 import { MouseEvent, ReactNode } from "react";
 import { useShallow } from "zustand/shallow";
@@ -66,7 +66,7 @@ function HistoryButtons() {
             <TooltipTrigger asChild>
               <motion.div
                 whileHover={disabled ? undefined : { scale: 1.1 }}
-                whileTap={ disabled ? undefined : { scale: 0.95 }}
+                whileTap={disabled ? undefined : { scale: 0.95 }}
               >
                 <Button
                   size="icon"

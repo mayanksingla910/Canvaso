@@ -1,12 +1,12 @@
 "use client";
 
-import { ToggleGroup, ToggleGroupItem } from "../ui/toggle-group";
+import { ToggleGroup, ToggleGroupItem } from "../../ui/toggle-group";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "../ui/tooltip";
+} from "../../ui/tooltip";
 import { motion } from "motion/react";
 import { useState } from "react";
 import { ToggleTypeOptions } from "./ToolOptions";
@@ -32,7 +32,10 @@ function ToggleOptions({ items, styleKey }: props) {
           type="single"
           value={selected}
           onValueChange={(v) => {
-            if (v) {apply(styleKey, v); useCanvasStore.getState().pushHistory()};
+            if (v) {
+              apply(styleKey, v);
+              useCanvasStore.getState().pushHistory();
+            }
           }}
           className="flex-wrap gap-1"
         >
