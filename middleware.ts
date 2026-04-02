@@ -17,11 +17,11 @@ export function middleware(request: NextRequest) {
   }
 
   if (pathname.startsWith("/") && !session && !isAuthPage && !isRoot) {
-    return NextResponse.redirect(new URL("/login", request.url));
+    return NextResponse.redirect(new URL("/", request.url));
   }
 
   if (!session) {
-    return NextResponse.redirect(new URL("/login", request.url));
+    return NextResponse.redirect(new URL("/", request.url));
   }
 
   return NextResponse.next();
