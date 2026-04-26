@@ -20,7 +20,7 @@ const Tool = ({ id, icon: Icon, label }: ToolProps) => {
   const handleClick = () => {
     setSelectedTool(id);
 
-    if(id === "select" || id === "hand") setOpenSidebar(false);
+    if (id === "select" || id === "hand") setOpenSidebar(false);
     else setOpenSidebar(true);
   };
 

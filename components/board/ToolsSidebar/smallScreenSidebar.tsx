@@ -14,11 +14,11 @@ import ColorOption from "./colorOption";
 import ToggleOptions from "./toggleOptions";
 import SliderOption from "./sliderOption";
 import ButtonOptions from "./buttonOptions";
-import { useIsMobile } from "@/hooks/isMobile";
 import { DefaultStyles, useToolStore } from "@/store/useToolStore";
 import { CanvasElement } from "@/types/canvas";
 import { STYLE_KEY_MAP } from ".";
 import TransparentIcon from "./transparentIcon";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 function SmallScreenSidebar({
   selectedElements,

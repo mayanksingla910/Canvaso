@@ -17,6 +17,8 @@ model User {
   updatedAt     DateTime  @updatedAt
   sessions      Session[]
   accounts      Account[]
+  boards        Board[]
+  projects      project[]
 
   @@unique([email])
   @@map("user")
@@ -68,4 +70,84 @@ model Verification {
 
   @@index([identifier])
   @@map("verification")
+}
+
+model Board {
+  id          String        @id @default(cuid())
+  name        String
+  thumbnail   String?      
+  createdAt   DateTime      @default(now())
+  editedAt    DateTime      @updatedAt
+  authorId    String
+  author      User          @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  projectId   String?
+  project     project?      @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  viewport    Json        
+  pageSize    Json         
+  elements    BoardElement[]
+  snapshots   BoardSnapshot[]
+
+  @@index([authorId])
+  @@map("board")
+}
+
+model BoardElement {
+  id            String   @id            
+  boardId       String
+  board         Board    @relation(fields: [boardId], references: [id], onDelete: Cascade)
+
+  type          String   
+  x             Float
+  y             Float
+  width         Float
+  height        Float
+  angle         Float    @default(0)
+  opacity       Float    @default(1)
+  strokeColor   String
+  strokeWidth   Float    @default(2)
+  strokeStyle   String   @default("solid") 
+  fillColor     String   @default("transparent")
+  strokeSharpness Float  @default(100)
+  isLocked      Boolean  @default(false)
+  isHidden      Boolean  @default(false)
+  isDeleted     Boolean  @default(false)   
+
+  props         Json     @default("{}")
+
+  boundElements String[] @default([])    
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([boardId])
+  @@index([boardId, type])                 
+  @@index([boardId, isDeleted])          
+  @@map("board_element")
+}
+
+model BoardSnapshot {
+  id          String   @id @default(cuid())
+  boardId     String
+  board       Board    @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  state       Json     
+  label       String? 
+  createdAt   DateTime @default(now())
+
+  @@index([boardId])
+  @@index([boardId, createdAt])
+  @@map("board_snapshot")
+}
+
+model project {
+  id          String   @id @default(cuid())
+  name        String
+  thumbnail   String?      
+  createdAt   DateTime      @default(now())
+  editedAt    DateTime      @updatedAt
+  authorId    String
+  author      User          @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  boards      Board[]
+
+  @@index([authorId])
+  @@map("project")
 }
