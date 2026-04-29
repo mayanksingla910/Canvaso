@@ -13,6 +13,13 @@ export async function GET(req: NextRequest) {
     where: {
       authorId: session.user.id,
     },
+    select: {
+      id: true,
+      name: true,
+      createdAt: true,
+      editedAt: true,
+      author: { select: { id: true, name: true, image: true } },
+    },
     orderBy: { editedAt: "desc" },
   });
 
@@ -30,12 +37,12 @@ export async function POST(req: NextRequest) {
   const {name, viewport, pageSize} = body;
   const board = await prisma.board.create({
     data: {
-      name: name ?? "New Board",
+      name: name?.trim() ?? "New Board",
       authorId: session.user.id,
       viewport: viewport ?? [0, 0, 100, 100],
-      pageSize: pageSize ?? [100, 100],
+      pageSize: pageSize ?? { width: 1920, height: 1080, label: "HD", isInfinite: true },
     },
   });
 
-  return NextResponse.json({board});
+  return NextResponse.json({board}, { status: 201 });
 }

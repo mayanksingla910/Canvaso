@@ -13,51 +13,62 @@ import {
   Table,
   TableBody,
   TableCell,
-  TableFooter,
   TableHead,
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { BoardRow, useBoards } from "@/hooks/useBoards";
 import { timeAgo } from "@/lib/timeAgo";
-import { router } from "better-auth/api";
+import axios from "axios";
 import { MoreHorizontalIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import EditableName from "./editable-name";
+import { mutate } from "swr";
 
-const user = {
-  name: "shadcn",
-  email: "m@example.com",
-  avatar: "/avatars/shadcn.jpg",
-};
+interface BoardTableProps {
+  boards?: BoardRow[];
+  isLoading?: boolean;
+  swrKey?: string;
+}
 
-type Board = {
-  id: string;
-  name: string;
-  createdAt: Date;
-  editedAt: Date;
-  author: typeof user;
-};
-
-const boards: Board[] = [
-  {
-    id: "INV001",
-    name: "My First Board",
-    createdAt: new Date("2026-04-03"),
-    editedAt: new Date("2025-03-20"),
-    author: user,
-  },
-  {
-    id: "INV002",
-    name: "My Second Board",
-    createdAt: new Date("2026-04-03"),
-    editedAt: new Date("2025-03-20"),
-    author: user,
-  },
-];
-
-function BoardTable() {
+function BoardTable({ boards: propBoards, isLoading: propLoading, swrKey }: BoardTableProps) {
   const isMobile = useIsMobile();
   const router = useRouter();
+  const { boards: fetchedBoards, isLoading: fetchLoading, refresh } = useBoards();
+  const boards = propBoards ?? fetchedBoards;
+  const isLoading = propLoading ?? fetchLoading;
+  const revalidationKey = swrKey ?? "/api/boards";
+
+  const handleDelete = async (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+
+    try {
+      await axios.delete(`/api/boards/${id}`);
+      toast.success("Board deleted");
+      mutate(revalidationKey);
+      if (!propBoards) refresh();
+    } catch {
+      toast.error("Failed to delete board");
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="py-8 text-center text-sm text-muted-foreground">
+        Loading boards…
+      </div>
+    );
+  }
+
+  if (!boards.length) {
+    return (
+      <div className="py-8 text-center text-sm text-muted-foreground">
+        No boards yet. Create one above!
+      </div>
+    );
+  }
 
   return (
     <Table>
@@ -73,12 +84,23 @@ function BoardTable() {
         </TableRow>
       </TableHeader>
       <TableBody>
-        {boards.map((board) => (
-          <TableRow key={board.id} onClick={() => router.push(`/${board.id}`)}>
-            <TableCell className="font-medium max-w-60 overflow-clip">{board.name}</TableCell>
+        {boards.map((board: BoardRow) => (
+          <TableRow
+            key={board.id}
+            onClick={() => router.push(`/${board.id}`)}
+            className="cursor-pointer"
+          >
+            <TableCell className="font-medium max-w-60 overflow-clip">
+              <EditableName
+                id={board.id}
+                name={board.name}
+                endpoint="/api/boards"
+                swrKeys={["/api/boards", revalidationKey]}
+              />
+            </TableCell>
             {!isMobile && (
               <TableCell
-                title={board.createdAt.toLocaleDateString("en-US", {
+                title={new Date(board.createdAt).toLocaleDateString("en-US", {
                   year: "numeric",
                   month: "long",
                   day: "numeric",
@@ -88,7 +110,7 @@ function BoardTable() {
               </TableCell>
             )}
             <TableCell
-              title={board.editedAt.toLocaleDateString("en-US", {
+              title={new Date(board.editedAt).toLocaleDateString("en-US", {
                 year: "numeric",
                 month: "long",
                 day: "numeric",
@@ -100,11 +122,11 @@ function BoardTable() {
               <TableCell className="">
                 <Avatar className="h-8 w-8">
                   <AvatarImage
-                    src={board.author.avatar}
+                    src={board.author.image ?? ""}
                     alt={board.author.name}
                   />
                   <AvatarFallback className="">
-                    {board.author.name.slice(0, 2).toUpperCase()}
+                    {board.author.name[0].toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
               </TableCell>
@@ -121,7 +143,10 @@ function BoardTable() {
                   <DropdownMenuItem>Edit</DropdownMenuItem>
                   <DropdownMenuItem>Duplicate</DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem variant="destructive">
+                  <DropdownMenuItem
+                    variant="destructive"
+                    onClick={(e) => handleDelete(e, board.id)}
+                  >
                     Delete
                   </DropdownMenuItem>
                 </DropdownMenuContent>
@@ -130,11 +155,6 @@ function BoardTable() {
           </TableRow>
         ))}
       </TableBody>
-      <TableFooter>
-        <TableRow>
-          <TableCell colSpan={5}>More...</TableCell>
-        </TableRow>
-      </TableFooter>
     </Table>
   );
 }

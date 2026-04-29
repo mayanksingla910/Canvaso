@@ -19,45 +19,45 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { ProjectRow, useProjects } from "@/hooks/useBoards";
 import { timeAgo } from "@/lib/timeAgo";
-import { router } from "better-auth/api";
+import axios from "axios";
 import { MoreHorizontalIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
-
-const user = {
-  name: "shadcn",
-  email: "m@example.com",
-  avatar: "/avatars/shadcn.jpg",
-};
-
-type project = {
-  id: string;
-  name: string;
-  createdAt: Date;
-  editedAt: Date;
-  author: typeof user;
-};
-
-const projects: project[] = [
-  {
-    id: "INV001",
-    name: "My First Project",
-    createdAt: new Date("2026-04-03"),
-    editedAt: new Date("2025-03-20"),
-    author: user,
-  },
-  {
-    id: "INV002",
-    name: "My Second Project",
-    createdAt: new Date("2026-04-03"),
-    editedAt: new Date("2025-03-20"),
-    author: user,
-  },
-];
+import { toast } from "sonner";
+import EditableName from "./editable-name";
 
 function ProjectTable() {
   const isMobile = useIsMobile();
   const router = useRouter();
+  const { projects, isLoading, refresh } = useProjects();
+
+  const handleDelete = async (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    try {
+      await axios.delete(`/api/projects/${id}`);
+      toast.success("Project deleted");
+      refresh();
+    } catch {
+      toast.error("Failed to delete project");
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="py-8 text-center text-sm text-muted-foreground">
+        Loading projects…
+      </div>
+    );
+  }
+
+  if (!projects.length) {
+    return (
+      <div className="py-8 text-center text-sm text-muted-foreground">
+        No projects yet. Create one above!
+      </div>
+    );
+  }
 
   return (
     <Table>
@@ -73,14 +73,23 @@ function ProjectTable() {
         </TableRow>
       </TableHeader>
       <TableBody>
-        {projects.map((project) => (
-          <TableRow key={project.id} onClick={() => router.push(`/projects/${project.id}`)}>
+        {projects.map((project: ProjectRow) => (
+          <TableRow
+            key={project.id}
+            onClick={() => router.push(`/projects/${project.id}`)}
+            className="cursor-pointer"
+          >
             <TableCell className="font-medium max-w-60 overflow-clip">
-              {project.name}
+              <EditableName
+                id={project.id}
+                name={project.name}
+                endpoint="/api/projects"
+                swrKeys="/api/projects"
+              />
             </TableCell>
             {!isMobile && (
               <TableCell
-                title={project.createdAt.toLocaleDateString("en-US", {
+                title={new Date(project.createdAt).toLocaleDateString("en-US", {
                   year: "numeric",
                   month: "long",
                   day: "numeric",
@@ -90,7 +99,7 @@ function ProjectTable() {
               </TableCell>
             )}
             <TableCell
-              title={project.editedAt.toLocaleDateString("en-US", {
+              title={new Date(project.editedAt).toLocaleDateString("en-US", {
                 year: "numeric",
                 month: "long",
                 day: "numeric",
@@ -102,11 +111,11 @@ function ProjectTable() {
               <TableCell className="">
                 <Avatar className="h-8 w-8">
                   <AvatarImage
-                    src={project.author.avatar}
+                    src={project.author.image ?? ""}
                     alt={project.author.name}
                   />
                   <AvatarFallback className="">
-                    {project.author.name.slice(0, 2).toUpperCase()}
+                    {project.author.name[0].toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
               </TableCell>
@@ -123,7 +132,10 @@ function ProjectTable() {
                   <DropdownMenuItem>Edit</DropdownMenuItem>
                   <DropdownMenuItem>Duplicate</DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem variant="destructive">
+                  <DropdownMenuItem
+                    variant="destructive"
+                    onClick={(e) => handleDelete(e, project.id)}
+                  >
                     Delete
                   </DropdownMenuItem>
                 </DropdownMenuContent>
@@ -132,11 +144,6 @@ function ProjectTable() {
           </TableRow>
         ))}
       </TableBody>
-      <TableFooter>
-        <TableRow>
-          <TableCell colSpan={5}>More...</TableCell>
-        </TableRow>
-      </TableFooter>
     </Table>
   );
 }

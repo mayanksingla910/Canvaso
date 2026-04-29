@@ -20,6 +20,7 @@ import { useForm } from "react-hook-form";
 import axios from "axios";
 import { toast } from "sonner";
 import { LoadingSwap } from "@/components/ui/loading-swap";
+import { mutate } from "swr";
 
 type FormValues = { name: string };
 
@@ -29,6 +30,7 @@ type ButtonConfig = {
   show: boolean;
   endpoint: string;
   responseKey: string;
+  swrKey: string;
   successMessage: string;
   errorMessage: string;
 };
@@ -50,6 +52,7 @@ function AddNewButtons() {
       show: showBoard,
       endpoint: "/api/boards",
       responseKey: "board",
+      swrKey: "/api/boards",
       successMessage: "Successfully created new board",
       errorMessage: "Failed to create new board",
     },
@@ -59,6 +62,7 @@ function AddNewButtons() {
       show: showProject,
       endpoint: "/api/projects",
       responseKey: "project",
+      swrKey: "/api/projects",
       successMessage: "Successfully created new project",
       errorMessage: "Failed to create new project",
     },
@@ -104,6 +108,7 @@ function AddDialog({
       const res = await axios.post(config.endpoint, { name: data.name });
       if (res.data[config.responseKey]) {
         toast.success(config.successMessage);
+        mutate(config.swrKey);
         reset();
         onOpenChange(false);
       }

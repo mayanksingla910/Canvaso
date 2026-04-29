@@ -13,6 +13,13 @@ export async function GET(req: NextRequest) {
     where: {
       authorId: session.user.id,
     },
+    select: {
+      id: true,
+      name: true,
+      createdAt: true,
+      editedAt: true,
+      author: { select: { id: true, name: true, image: true } },
+    },
     orderBy: { editedAt: "desc" },
   });
 
@@ -30,10 +37,10 @@ export async function POST(req: NextRequest) {
   const {name} = body;
   const project = await prisma.project.create({
     data: {
-      name: name ?? "New Project",
+      name: name?.trim() ?? "New Project",
       authorId: session.user.id,
     },
   });
 
-  return NextResponse.json({project});
+  return NextResponse.json({project}, {status: 201});
 }

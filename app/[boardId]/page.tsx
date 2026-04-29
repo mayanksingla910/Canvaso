@@ -1,7 +1,10 @@
-import Board from "@/components/board";
+import BoardCanvas from "./_components/boardCanvas";
 
-function BoardPage() {
-  return <Board />;
+interface BoardPageProps {
+  params: Promise<{ boardId: string }>;
 }
 
-export default BoardPage;
+export default async function BoardPage({ params }: BoardPageProps) {
+  const { boardId } = await params;
+  return <BoardCanvas boardId={boardId} />;
+}

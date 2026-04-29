@@ -28,7 +28,13 @@ type CanvasStore = {
   undo: () => void;
   redo: () => void;
 
-  loadState: (state: Record<string, CanvasElement>) => void;
+  pendingDeleteIds: string[];
+  clearPendingDeletes: () => void;
+
+  loadState: (
+    elements: Record<string, CanvasElement>,
+    viewport?: Viewport,
+  ) => void;
 };
 
 export const useCanvasStore = create<CanvasStore>((set, get) => ({
@@ -157,7 +163,18 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
     }));
   },
 
-loadState: (state) => {
-  set({ elements: state, selectedIds: [], history: [], historyIndex: -1 })
-}
+  pendingDeleteIds: [],
+  clearPendingDeletes: () => set({ pendingDeleteIds: [] }),
+
+  loadState: (elements, viewport) => {
+    set({
+      elements: elements,
+      selectedIds: [],
+      viewport: viewport ?? { x: 0, y: 0, zoom: 1 },
+      history: [],
+      historyIndex: -1,
+      pendingDeleteIds: [],
+      clipboard: [],
+    });
+  },
 }));
