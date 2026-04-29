@@ -3,12 +3,8 @@ import axios from "axios";
 import { useCallback, useEffect, useRef } from "react";
 
 export function useBoardSync(boardId: string) {
-  const {
-    loadState,
-    elements,
-    viewport,
-    clearPendingDeletes,
-  } = useCanvasStore();
+  const { loadState, elements, viewport, clearPendingDeletes } =
+    useCanvasStore();
 
   const isLoaded = useRef(false);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -18,9 +14,7 @@ export function useBoardSync(boardId: string) {
 
     async function load() {
       try {
-        const res = await axios.get(`/api/boards/${boardId}`);
-        if (!res.ok) throw new Error("Failed to load board");
-        const data = await res.json();
+        const { data } = await axios.get(`/api/boards/${boardId}`);
 
         if (!cancelled) {
           loadState(data.elements, data.viewport);
@@ -72,7 +66,5 @@ export function useBoardSync(boardId: string) {
     };
   });
 
-  return { save }
+  return { save };
 }
-
-
