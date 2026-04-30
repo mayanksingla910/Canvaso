@@ -1,4 +1,4 @@
-"use State";
+"use client";
 import { Popover, PopoverTrigger, PopoverContent } from "../../ui/popover";
 import { AnimatePresence, motion } from "motion/react";
 import { Label } from "../../ui/label";

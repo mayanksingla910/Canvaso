@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
     data: {
       name: name?.trim() ?? "New Board",
       authorId: session.user.id,
-      viewport: viewport ?? [0, 0, 100, 100],
+      viewport: { x: 0, y: 0, zoom: 1 },
       pageSize: pageSize ?? { width: 1920, height: 1080, label: "HD", isInfinite: true },
       projectId: projectId ?? null,
       

@@ -3,12 +3,11 @@ import axios from "axios";
 import { useCallback, useEffect, useRef } from "react";
 
 export function useBoardSync(boardId: string) {
-  const { loadState, elements, viewport, clearPendingDeletes } =
-    useCanvasStore();
+  const loadState = useCanvasStore((s) => s.loadState);
+  const clearPendingDeletes = useCanvasStore((s) => s.clearPendingDeletes);
 
   const isLoaded = useRef(false);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-
   useEffect(() => {
     let cancelled = false;
 
@@ -34,14 +33,14 @@ export function useBoardSync(boardId: string) {
   const save = useCallback(async () => {
     if (!isLoaded.current) return;
 
-    const deletedIds = useCanvasStore.getState().pendingDeleteIds;
+    const { elements, viewport, pendingDeleteIds } = useCanvasStore.getState();
     clearPendingDeletes();
 
     try {
       await axios.put(`/api/boards/${boardId}`, {
-        elements: useCanvasStore.getState().elements,
-        viewport: useCanvasStore.getState().viewport,
-        deletedIds,
+        elements,
+        viewport,
+        deletedIds: pendingDeleteIds,
       });
     } catch (err) {
       console.error("[useBoardSync] save error:", err);
@@ -49,22 +48,27 @@ export function useBoardSync(boardId: string) {
   }, [boardId, clearPendingDeletes]);
 
   useEffect(() => {
-    if (!isLoaded.current) return;
+    const unsub = useCanvasStore.subscribe((state, prev) => {
+      if (!isLoaded.current) return;
+      if (state.elements === prev.elements && state.viewport === prev.viewport)
+        return;
 
-    if (saveTimer.current) clearTimeout(saveTimer.current);
-    saveTimer.current = setTimeout(save, 2000);
+      if (saveTimer.current) clearTimeout(saveTimer.current);
+      saveTimer.current = setTimeout(save, 2000);
+    });
 
     return () => {
+      unsub();
       if (saveTimer.current) clearTimeout(saveTimer.current);
     };
-  }, [elements, viewport, save]);
+  }, [save]);
 
   useEffect(() => {
     return () => {
       if (saveTimer.current) clearTimeout(saveTimer.current);
       save();
     };
-  });
+  }, []);
 
   return { save };
 }

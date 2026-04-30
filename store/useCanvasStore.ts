@@ -167,10 +167,20 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
   clearPendingDeletes: () => set({ pendingDeleteIds: [] }),
 
   loadState: (elements, viewport) => {
+    const isValidViewport =
+      viewport &&
+      typeof viewport.x === "number" &&
+      !isNaN(viewport.x) &&
+      typeof viewport.y === "number" &&
+      !isNaN(viewport.y) &&
+      typeof viewport.zoom === "number" &&
+      !isNaN(viewport.zoom) &&
+      viewport.zoom > 0;
+
     set({
-      elements: elements,
+      elements,
+      viewport: isValidViewport ? viewport : { x: 0, y: 0, zoom: 1 },
       selectedIds: [],
-      viewport: viewport ?? { x: 0, y: 0, zoom: 1 },
       history: [],
       historyIndex: -1,
       pendingDeleteIds: [],
