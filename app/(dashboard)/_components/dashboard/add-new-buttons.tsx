@@ -30,7 +30,8 @@ type ButtonConfig = {
   show: boolean;
   endpoint: string;
   responseKey: string;
-  swrKey: string;
+  swrKeys: string[];
+  extraBody?: Record<string, unknown>;
   successMessage: string;
   errorMessage: string;
 };
@@ -45,6 +46,10 @@ function AddNewButtons() {
     pathname.startsWith("/projects/");
   const showProject = pathname === "/projects" || pathname === "/";
 
+  const projectId = pathname.startsWith("/projects/")
+    ? pathname.split("/projects/")[1]?.split("/")[0]
+    : undefined;
+
   const buttons: ButtonConfig[] = [
     {
       name: "Board",
@@ -52,7 +57,10 @@ function AddNewButtons() {
       show: showBoard,
       endpoint: "/api/boards",
       responseKey: "board",
-      swrKey: "/api/boards",
+      swrKeys: projectId
+        ? ["/api/boards", `/api/projects/${projectId}`]
+        : ["/api/boards"],
+      extraBody: projectId ? { projectId } : undefined,
       successMessage: "Successfully created new board",
       errorMessage: "Failed to create new board",
     },
@@ -62,7 +70,7 @@ function AddNewButtons() {
       show: showProject,
       endpoint: "/api/projects",
       responseKey: "project",
-      swrKey: "/api/projects",
+      swrKeys: ["/api/projects"],
       successMessage: "Successfully created new project",
       errorMessage: "Failed to create new project",
     },
@@ -77,15 +85,12 @@ function AddNewButtons() {
             key={item.name}
             config={item}
             open={openDialog === item.name}
-            onOpenChange={(isOpen) =>
-              setOpenDialog(isOpen ? item.name : null)
-            }
+            onOpenChange={(isOpen) => setOpenDialog(isOpen ? item.name : null)}
           />
         ))}
     </div>
   );
 }
-
 
 function AddDialog({
   config,
@@ -105,10 +110,13 @@ function AddDialog({
 
   const onSubmit = async (data: FormValues) => {
     try {
-      const res = await axios.post(config.endpoint, { name: data.name });
+      const res = await axios.post(config.endpoint, {
+        name: data.name,
+        ...config.extraBody,
+      });
       if (res.data[config.responseKey]) {
         toast.success(config.successMessage);
-        mutate(config.swrKey);
+        await Promise.all(config.swrKeys.map((k) => mutate(k)));
         reset();
         onOpenChange(false);
       }
@@ -144,7 +152,7 @@ function AddDialog({
               placeholder="Enter a name"
               {...register("name", { required: "Name is required" })}
             />
-            <FieldError errors={[errors.name]}/>
+            <FieldError errors={[errors.name]} />
           </Field>
           <DialogFooter className="grid grid-cols-2 mt-4">
             <DialogClose asChild>

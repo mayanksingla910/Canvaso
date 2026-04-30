@@ -9,7 +9,7 @@ function InsetHeader() {
   const segment = pathname.split("/").filter(Boolean)[0] ?? "Dashboard";
   const title = segment.charAt(0).toUpperCase() + segment.slice(1);
   return (
-    <header className="sticky top-0 bg-background border-b flex h-16 shrink-0 items-center gap-2">
+    <header className="sticky top-0 bg-background border-b flex h-16 shrink-0 items-center gap-2 z-20">
       <div className="flex items-center gap-2 px-4">
         <SidebarTrigger className="-ml-1" aria-label="Toggle sidebar" />
         <Separator

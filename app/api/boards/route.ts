@@ -34,13 +34,15 @@ export async function POST(req: NextRequest) {
 
   const body = await req.json();
 
-  const {name, viewport, pageSize} = body;
+  const {name, projectId, viewport, pageSize} = body;
   const board = await prisma.board.create({
     data: {
       name: name?.trim() ?? "New Board",
       authorId: session.user.id,
       viewport: viewport ?? [0, 0, 100, 100],
       pageSize: pageSize ?? { width: 1920, height: 1080, label: "HD", isInfinite: true },
+      projectId: projectId ?? null,
+      
     },
   });
 
