@@ -19,11 +19,12 @@ export async function GET(req: NextRequest) {
       createdAt: true,
       editedAt: true,
       author: { select: { id: true, name: true, image: true } },
+      projectId: true
     },
     orderBy: { editedAt: "desc" },
   });
 
-  return NextResponse.json({boards});
+  return NextResponse.json({ boards });
 }
 
 export async function POST(req: NextRequest) {
@@ -34,17 +35,26 @@ export async function POST(req: NextRequest) {
 
   const body = await req.json();
 
-  const {name, projectId, viewport, pageSize} = body;
-  const board = await prisma.board.create({
-    data: {
-      name: name?.trim() ?? "New Board",
-      authorId: session.user.id,
-      viewport: { x: 0, y: 0, zoom: 1 },
-      pageSize: pageSize ?? { width: 1920, height: 1080, label: "HD", isInfinite: true },
-      projectId: projectId ?? null,
-      
-    },
-  });
+  const { name, projectId } = body;
+  const [board] = await prisma.$transaction([
+    prisma.board.create({
+      data: {
+        name: name?.trim() ?? "New Board",
+        authorId: session.user.id,
+        viewport: { x: 0, y: 0, zoom: 1 },
+        pageSize: { width: 1920, height: 1080, label: "HD", isInfinite: true },
+        projectId: projectId ?? null,
+      },
+    }),
+    ...(projectId
+      ? [
+          prisma.project.update({
+            where: { id: projectId },
+            data: { editedAt: new Date() },
+          }),
+        ]
+      : []),
+  ]);
 
-  return NextResponse.json({board}, { status: 201 });
+  return NextResponse.json({ board }, { status: 201 });
 }

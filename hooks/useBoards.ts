@@ -8,6 +8,7 @@ export type BoardRow = {
   createdAt: string;
   editedAt: string;
   author: { id: string; name: string; image: string | null };
+  projectId: string | null;
 };
 
 export type ProjectRow = {

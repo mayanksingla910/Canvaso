@@ -22,18 +22,18 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { ProjectRow, useProjects } from "@/hooks/useBoards";
 import { timeAgo } from "@/lib/timeAgo";
 import axios from "axios";
-import { MoreHorizontalIcon } from "lucide-react";
+import { MoreHorizontalIcon, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import EditableName from "./editable-name";
+import DeleteDialog from "@/components/delete-dialog";
 
 function ProjectTable() {
   const isMobile = useIsMobile();
   const router = useRouter();
   const { projects, isLoading, refresh } = useProjects();
 
-  const handleDelete = async (e: React.MouseEvent, id: string) => {
-    e.stopPropagation();
+  const handleDelete = async (id: string) => {
     try {
       await axios.delete(`/api/projects/${id}`);
       toast.success("Project deleted");
@@ -95,7 +95,7 @@ function ProjectTable() {
                   day: "numeric",
                 })}
               >
-                {timeAgo(project.createdAt)}
+                {timeAgo(new Date(project.createdAt))}
               </TableCell>
             )}
             <TableCell
@@ -105,7 +105,7 @@ function ProjectTable() {
                 day: "numeric",
               })}
             >
-              {timeAgo(project.editedAt)}
+              {timeAgo(new Date(project.editedAt))}
             </TableCell>
             {!isMobile && (
               <TableCell className="">
@@ -132,12 +132,21 @@ function ProjectTable() {
                   <DropdownMenuItem>Edit</DropdownMenuItem>
                   <DropdownMenuItem>Duplicate</DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    variant="destructive"
-                    onClick={(e) => handleDelete(e, project.id)}
-                  >
-                    Delete
-                  </DropdownMenuItem>
+                  <DeleteDialog
+                    type="project"
+                    name={project.name}
+                    onDelete={() => handleDelete(project.id)}
+                    trigger={
+                      <DropdownMenuItem
+                        variant="destructive"
+                        onSelect={(e) => e.preventDefault()}
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <Trash2 />
+                        Delete
+                      </DropdownMenuItem>
+                    }
+                  />
                 </DropdownMenuContent>
               </DropdownMenu>
             </TableCell>

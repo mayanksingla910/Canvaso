@@ -20,7 +20,7 @@ function DashboardLayout({ children }: { children: React.ReactNode }) {
       <AppSidebar />
       <SidebarInset>
         <InsetHeader />
-        <main className="flex flex-1 flex-col gap-10 p-4 lg:px-12 bg-background border-b ">
+        <main className="flex flex-1 flex-col gap-10 p-4 lg:px-12 bg-background border-b pb-28">
           <AddNewButtons />
           {children}
         </main>

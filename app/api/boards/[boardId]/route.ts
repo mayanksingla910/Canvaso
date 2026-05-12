@@ -84,7 +84,7 @@ export async function PUT(
 
   const board = await prisma.board.findUnique({
     where: { id: boardId, authorId: session.user.id },
-    select: { id: true },
+    select: { id: true, projectId: true },
   });
   if (!board)
     return NextResponse.json({ error: "Board not found" }, { status: 404 });
@@ -212,6 +212,15 @@ export async function PUT(
       where: { id: boardId },
       data: { viewport: viewportResult.data },
     }),
+
+    ...(board.projectId
+      ? [
+          prisma.project.update({
+            where: { id: board.projectId },
+            data: { editedAt: new Date() },
+          }),
+        ]
+      : []),
   ]);
 
   return NextResponse.json({ ok: true });
@@ -227,16 +236,43 @@ export async function PATCH(
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { boardId } = await params;
-  const { name } = await req.json();
+  const body = await req.json();
 
-  if (!name?.trim())
-    return NextResponse.json({ error: "Name is required" }, { status: 400 });
+  const data: Record<string, unknown> = {};
+
+  if ("name" in body) {
+    if (!body.name?.trim())
+      return NextResponse.json({ error: "Name is required" }, { status: 400 });
+    data.name = body.name.trim();
+  }
+
+  if ("projectId" in body) {
+    data.projectId = body.projectId ?? null;
+  }
+
+  const oldBoard = await prisma.board.findUnique({
+    where: { id: boardId, authorId: session.user.id },
+    select: { projectId: true },
+  });
 
   const board = await prisma.board.update({
     where: { id: boardId, authorId: session.user.id },
-    data: { name: name.trim() },
-    select: { id: true, name: true },
+    data,
+    select: { id: true, name: true, projectId: true },
   });
+
+  const projectToTouch = [oldBoard?.projectId, board.projectId].filter(
+    (id): id is string => !!id && id !== undefined,
+  );
+
+  const uniqueProjects = [...new Set(projectToTouch)];
+
+  if (uniqueProjects.length > 0) {
+    await prisma.project.updateMany({
+      where: { id: { in: uniqueProjects } },
+      data: { editedAt: new Date() },
+    });
+  }
 
   return NextResponse.json({ board });
 }
@@ -251,9 +287,21 @@ export async function DELETE(
 
   const { boardId } = await params;
 
+  const board = await prisma.board.findUnique({
+    where: { id: boardId, authorId: session.user.id },
+    select: { projectId: true },
+  });
+
   await prisma.board.delete({
     where: { id: boardId, authorId: session.user.id },
   });
+
+  if (board?.projectId) {
+    await prisma.project.update({
+      where: { id: board.projectId },
+      data: { editedAt: new Date() },
+    });
+  }
 
   return NextResponse.json({ ok: true });
 }

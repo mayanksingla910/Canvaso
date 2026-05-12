@@ -2,6 +2,7 @@
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import DeleteDialog from "@/components/delete-dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,11 +22,12 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { BoardRow, useBoards } from "@/hooks/useBoards";
 import { timeAgo } from "@/lib/timeAgo";
 import axios from "axios";
-import { MoreHorizontalIcon } from "lucide-react";
+import { FolderInput, FolderPen, MoreHorizontalIcon, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import EditableName from "./editable-name";
 import { mutate } from "swr";
+import { ProjectCommand } from "./project-command";
 
 interface BoardTableProps {
   boards?: BoardRow[];
@@ -37,21 +39,21 @@ function BoardTable({ boards: propBoards, isLoading: propLoading, swrKey }: Boar
   const isMobile = useIsMobile();
   const router = useRouter();
   const { boards: fetchedBoards, isLoading: fetchLoading, refresh } = useBoards();
+
   const boards = propBoards ?? fetchedBoards;
   const isLoading = propLoading ?? fetchLoading;
   const revalidationKey = swrKey ?? "/api/boards";
 
-  const handleDelete = async (e: React.MouseEvent, id: string) => {
-    e.stopPropagation();
+  const revalidate = () => {
+    mutate(revalidationKey);
+    mutate("/api/boards");
+    if (!propBoards) refresh();
+  };
 
-    try {
-      await axios.delete(`/api/boards/${id}`);
-      toast.success("Board deleted");
-      mutate(revalidationKey);
-      if (!propBoards) refresh();
-    } catch {
-      toast.error("Failed to delete board");
-    }
+  const handleDelete = async (id: string) => {
+    await axios.delete(`/api/boards/${id}`);
+    toast.success("Board deleted");
+    revalidate();
   };
 
   if (isLoading) {
@@ -77,9 +79,7 @@ function BoardTable({ boards: propBoards, isLoading: propLoading, swrKey }: Boar
           <TableHead className="max-w-60">Name</TableHead>
           {!isMobile && <TableHead className="w-32">Created</TableHead>}
           <TableHead className="w-28">Edited</TableHead>
-          {!isMobile && (
-            <TableHead className="text-center w-14">Author</TableHead>
-          )}
+          {!isMobile && <TableHead className="text-center w-14">Author</TableHead>}
           <TableHead className="w-14" />
         </TableRow>
       </TableHeader>
@@ -106,7 +106,7 @@ function BoardTable({ boards: propBoards, isLoading: propLoading, swrKey }: Boar
                   day: "numeric",
                 })}
               >
-                {timeAgo(board.createdAt)}
+                {timeAgo(new Date(board.createdAt))}
               </TableCell>
             )}
             <TableCell
@@ -116,39 +116,67 @@ function BoardTable({ boards: propBoards, isLoading: propLoading, swrKey }: Boar
                 day: "numeric",
               })}
             >
-              {timeAgo(board.editedAt)}
+              {timeAgo(new Date(board.editedAt))}
             </TableCell>
             {!isMobile && (
-              <TableCell className="">
+              <TableCell>
                 <Avatar className="h-8 w-8">
-                  <AvatarImage
-                    src={board.author.image ?? ""}
-                    alt={board.author.name}
-                  />
-                  <AvatarFallback className="">
-                    {board.author.name[0].toUpperCase()}
-                  </AvatarFallback>
+                  <AvatarImage src={board.author.image ?? ""} alt={board.author.name} />
+                  <AvatarFallback>{board.author.name[0].toUpperCase()}</AvatarFallback>
                 </Avatar>
               </TableCell>
             )}
             <TableCell className="text-right">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="size-8">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="size-8"
+                    onClick={(e) => e.stopPropagation()}
+                  >
                     <MoreHorizontalIcon />
                     <span className="sr-only">Open menu</span>
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuItem>Edit</DropdownMenuItem>
-                  <DropdownMenuItem>Duplicate</DropdownMenuItem>
+
+                  <ProjectCommand
+                    boardId={board.id}
+                    boardName={board.name}
+                    currentProjectId={board.projectId}
+                    revalidationKeys={[revalidationKey, "/api/boards"]}
+                    trigger={
+                      <DropdownMenuItem
+                        onSelect={(e) => e.preventDefault()}
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        {board.projectId ? (
+                          <><FolderPen className="size-4" /> Change project</>
+                        ) : (
+                          <><FolderInput className="size-4" /> Add to project</>
+                        )}
+                      </DropdownMenuItem>
+                    }
+                  />
+
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    variant="destructive"
-                    onClick={(e) => handleDelete(e, board.id)}
-                  >
-                    Delete
-                  </DropdownMenuItem>
+
+                  <DeleteDialog
+                    type="board"
+                    name={board.name}
+                    onDelete={() => handleDelete(board.id)}
+                    trigger={
+                      <DropdownMenuItem
+                        variant="destructive"
+                        onSelect={(e) => e.preventDefault()}
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <Trash2 className="size-4" />
+                        Delete
+                      </DropdownMenuItem>
+                    }
+                  />
                 </DropdownMenuContent>
               </DropdownMenu>
             </TableCell>
