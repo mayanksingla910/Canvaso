@@ -10,6 +10,13 @@ import {
   FieldLabel,
   FieldSeparator,
 } from "@/components/ui/field";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
 import PasswordInput from "../../../components/passwordInput";
@@ -25,7 +32,7 @@ import { SocialButtons } from "./SocialButtons";
 export function LoginForm({
   className,
   ...props
-}: React.ComponentProps<"form">) {
+}: React.ComponentProps<"div">) {
   const {
     register,
     handleSubmit,
@@ -64,63 +71,65 @@ export function LoginForm({
   };
 
   return (
-    <form
-      onSubmit={handleSubmit(onSubmit)}
-      className={cn("flex flex-col gap-6", className)}
-      {...props}
-    >
-      <FieldGroup>
-        <div className="flex flex-col items-center gap-1 text-center">
-          <h1 className="text-2xl font-bold">Login to your account</h1>
-          <p className="text-muted-foreground text-sm text-balance">
+    <div className={cn("flex flex-col gap-6", className)} {...props}>
+      <Card>
+        <CardHeader>
+          <CardTitle>Login to your account</CardTitle>
+          <CardDescription>
             Enter your email below to login to your account
-          </p>
-        </div>
-        <Field>
-          <FieldLabel htmlFor="email">Email</FieldLabel>
-          <Input
-            id="email"
-            type="email"
-            placeholder="m@example.com"
-            required
-            {...register("email")}
-          />
-          <FieldError errors={[errors.email]} />
-        </Field>
-        <Field>
-          <div className="flex items-center">
-            <FieldLabel htmlFor="password">Password</FieldLabel>
-            <Link
-              href="/forgot-password"
-              className="ml-auto text-sm underline-offset-4 hover:underline"
-            >
-              Forgot your password?
-            </Link>
-          </div>
-          <PasswordInput
-            id="password"
-            required
-            placeholder="Enter Your Password"
-            {...register("password")}
-          />
-          <FieldError errors={[errors.password]} />
-        </Field>
-        <Field>
-          <Button type="submit">
-            <LoadingSwap isLoading={isSubmitting}>Login</LoadingSwap>
-          </Button>
-        </Field>
-        <FieldSeparator>Or continue with</FieldSeparator>
-        <Field>
-          <SocialButtons />
-          <FieldDescription className="text-center">
-            Don&apos;t have an account?{" "}
-            <Link href={"/signup"} className="underline underline-offset-4">
-              Sign up
-            </Link>
-          </FieldDescription>
-        </Field>
-      </FieldGroup>
-    </form>
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit(onSubmit)}>
+            <FieldGroup>
+              <Field>
+                <FieldLabel htmlFor="email">Email</FieldLabel>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="m@example.com"
+                  required
+                  {...register("email")}
+                />
+                <FieldError errors={[errors.email]} />
+              </Field>
+              <Field>
+                <div className="flex items-center">
+                  <FieldLabel htmlFor="password">Password</FieldLabel>
+                  <Link
+                    href="/forgot-password"
+                    className="ml-auto text-sm underline-offset-4 hover:underline"
+                  >
+                    Forgot your password?
+                  </Link>
+                </div>
+                <PasswordInput
+                  id="password"
+                  required
+                  placeholder="Enter Your Password"
+                  {...register("password")}
+                />
+                <FieldError errors={[errors.password]} />
+              </Field>
+              <Field>
+                <Button type="submit">
+                  <LoadingSwap isLoading={isSubmitting}>Login</LoadingSwap>
+                </Button>
+                <SocialButtons />
+                <FieldDescription className="text-center">
+                  Don&apos;t have an account?{" "}
+                  <Link
+                    href={"/signup"}
+                    className="underline underline-offset-4"
+                  >
+                    Sign up
+                  </Link>
+                </FieldDescription>
+              </Field>
+            </FieldGroup>
+          </form>
+        </CardContent>
+      </Card>
+    </div>
   );
 }

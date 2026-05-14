@@ -1,6 +1,5 @@
 "use client";
 
-import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
   Field,
@@ -10,6 +9,13 @@ import {
   FieldLabel,
   FieldSeparator,
 } from "@/components/ui/field";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
 import PasswordInput from "../../../components/passwordInput";
@@ -22,9 +28,8 @@ import { authClient } from "@/lib/auth-client";
 import { LoadingSwap } from "../../../components/ui/loading-swap";
 
 export function SignupForm({
-  className,
   ...props
-}: React.ComponentProps<"form">) {
+}: React.ComponentProps<typeof Card>) {
   const {
     register,
     handleSubmit,
@@ -65,18 +70,18 @@ export function SignupForm({
   };
 
   return (
+    <Card {...props}>
+      <CardHeader>
+        <CardTitle>Create an account</CardTitle>
+        <CardDescription>
+          Enter your information below to create your account
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
     <form
       onSubmit={handleSubmit(onSubmit)}
-      className={cn("flex flex-col gap-6", className)}
-      {...props}
     >
       <FieldGroup>
-        <div className="flex flex-col items-center gap-1 text-center">
-          <h1 className="text-2xl font-bold">Create your account</h1>
-          <p className="text-muted-foreground text-sm text-balance">
-            Fill in the form below to create your account
-          </p>
-        </div>
         <Field>
           <FieldLabel htmlFor="name">Full Name</FieldLabel>
           <Input
@@ -119,9 +124,6 @@ export function SignupForm({
           <Button type="submit">
             <LoadingSwap isLoading={isSubmitting}>Create Account</LoadingSwap>
           </Button>
-        </Field>
-        <FieldSeparator>Or continue with</FieldSeparator>
-        <Field>
           <Button variant="outline" type="button">
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -141,5 +143,7 @@ export function SignupForm({
         </Field>
       </FieldGroup>
     </form>
+    </CardContent>
+    </Card>
   );
 }

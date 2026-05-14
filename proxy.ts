@@ -16,12 +16,8 @@ export function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
-  if (pathname.startsWith("/") && !session && !isAuthPage && !isRoot) {
-    return NextResponse.redirect(new URL("/", request.url));
-  }
-
   if (!session) {
-    return NextResponse.redirect(new URL("/", request.url));
+    return NextResponse.rewrite(new URL("/404", request.url));
   }
 
   return NextResponse.next();
