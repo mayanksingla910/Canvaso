@@ -1,0 +1,14 @@
+{
+  "name": "@canvaso/canvas-engine",
+  "version": "0.0.1",
+  "private": true,
+  "exports": {
+    ".": "./index.ts"
+  },
+  "dependencies": {
+    "@canvaso/shared-types": "workspace:*"
+  },
+  "devDependencies": {
+    "@repo/typescript-config": "workspace:*"
+  }
+}
