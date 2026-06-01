@@ -83,7 +83,8 @@ model Board {
   projectId   String?
   project     project?      @relation(fields: [projectId], references: [id], onDelete: SetNull)
   viewport    Json        
-  pageSize    Json         
+  pageSize    Json        
+  ydocState   Bytes? 
   elements    BoardElement[]
   snapshots   BoardSnapshot[]
 
