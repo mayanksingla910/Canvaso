@@ -18,7 +18,8 @@ model User {
   sessions      Session[]
   accounts      Account[]
   boards        Board[]
-  projects      project[]
+  projects      Project[]
+  collaborators BoardCollaborator[]
 
   @@unique([email])
   @@map("user")
@@ -81,12 +82,14 @@ model Board {
   authorId    String
   author      User          @relation(fields: [authorId], references: [id], onDelete: Cascade)
   projectId   String?
-  project     project?      @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  project     Project?      @relation(fields: [projectId], references: [id], onDelete: SetNull)
   viewport    Json        
   pageSize    Json        
   ydocState   Bytes? 
   elements    BoardElement[]
   snapshots   BoardSnapshot[]
+  shareLinks  BoardShareLink[]
+  collaborators BoardCollaborator[]
 
   @@index([authorId])
   @@map("board")
@@ -139,7 +142,7 @@ model BoardSnapshot {
   @@map("board_snapshot")
 }
 
-model project {
+model Project {
   id          String   @id @default(cuid())
   name        String
   thumbnail   String?      
@@ -151,4 +154,39 @@ model project {
 
   @@index([authorId])
   @@map("project")
+}
+
+model BoardShareLink {
+  id        String    @id @default(cuid())
+  boardId   String
+  board     Board     @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  token     String    @unique @default(cuid())
+  role      ShareRole
+  createdAt DateTime  @default(now())
+  expiresAt DateTime?
+  isActive  Boolean   @default(true)
+
+  @@index([token])       
+  @@index([boardId])
+  @@map("board_share_link")
+}
+
+model BoardCollaborator {
+  id       String    @id @default(cuid())
+  boardId  String
+  board    Board     @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  userId   String
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role     ShareRole
+  addedAt  DateTime  @default(now())
+
+  @@unique([boardId, userId])   
+  @@index([userId])          
+  @@index([boardId])
+  @@map("board_collaborator")
+}
+
+enum ShareRole {
+  viewer
+  editor
 }

@@ -35,6 +35,8 @@ type CanvasStore = {
     elements: Record<string, CanvasElement>,
     viewport?: Viewport,
   ) => void;
+
+  setElementsFromRemote: (elements: Record<string, CanvasElement>) => void;
 };
 
 export const useCanvasStore = create<CanvasStore>((set, get) => ({
@@ -75,6 +77,7 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
       return { elements: updated };
     });
   },
+
   clipboard: [],
 
   copySelected: () => {
@@ -186,5 +189,9 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
       pendingDeleteIds: [],
       clipboard: [],
     });
+  },
+
+  setElementsFromRemote: (elements) => {
+    set({ elements });
   },
 }));

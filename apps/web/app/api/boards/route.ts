@@ -4,25 +4,57 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(req: NextRequest) {
   const session = await auth.api.getSession({ headers: req.headers });
-
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const boards = await prisma.board.findMany({
-    where: {
-      authorId: session.user.id,
-    },
-    select: {
-      id: true,
-      name: true,
-      createdAt: true,
-      editedAt: true,
-      author: { select: { id: true, name: true, image: true } },
-      projectId: true
-    },
-    orderBy: { editedAt: "desc" },
-  });
+  const [ownedBoards, collaborations] = await Promise.all([
+    prisma.board.findMany({
+      where: { authorId: session.user.id },
+      select: {
+        id: true,
+        name: true,
+        createdAt: true,
+        editedAt: true,
+        author: { select: { id: true, name: true, image: true } },
+        projectId: true,
+      },
+      orderBy: { editedAt: "desc" },
+    }),
+    prisma.boardCollaborator.findMany({
+      where: { userId: session.user.id },
+      select: {
+        role: true,
+        board: {
+          select: {
+            id: true,
+            name: true,
+            createdAt: true,
+            editedAt: true,
+            author: { select: { id: true, name: true, image: true } },
+            projectId: true,
+          },
+        },
+      },
+      orderBy: { board: { editedAt: "desc" } },
+    }),
+  ]);
+
+  const sharedBoards = collaborations.map((c) => ({
+    ...c.board,
+    role: c.role,      
+    isShared: true,    
+  }));
+
+  const owned = ownedBoards.map((b) => ({
+    ...b,
+    role: "owner" as const,
+    isShared: false,
+  }));
+
+  const boards = [...owned, ...sharedBoards].sort(
+    (a, b) => new Date(b.editedAt).getTime() - new Date(a.editedAt).getTime()
+  );
 
   return NextResponse.json({ boards });
 }

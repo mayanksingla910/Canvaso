@@ -105,6 +105,9 @@ importers:
       dotenv:
         specifier: ^17.3.1
         version: 17.4.2
+      lib0:
+        specifier: ^0.2.117
+        version: 0.2.117
       lucide-react:
         specifier: ^0.562.0
         version: 0.562.0(react@19.2.3)
@@ -144,6 +147,9 @@ importers:
       tailwind-merge:
         specifier: ^3.4.0
         version: 3.6.0
+      y-protocols:
+        specifier: ^1.0.7
+        version: 1.0.7(yjs@13.6.30)
       y-websocket:
         specifier: ^3.0.0
         version: 3.0.0(yjs@13.6.30)

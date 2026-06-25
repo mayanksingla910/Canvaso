@@ -1,24 +1,42 @@
-import { notFound } from "next/navigation";
 import BoardCanvas from "./_components/boardCanvas";
-import { prisma } from "@canvaso/database";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
+import { redirect, notFound } from "next/navigation";
+import { resolveRole } from "@/lib/resolveRole";
 
 interface BoardPageProps {
   params: Promise<{ boardId: string }>;
+  searchParams: Promise<{ token?: string }>;
 }
 
-export default async function BoardPage({ params }: BoardPageProps) {
+export default async function BoardPage({
+  params,
+  searchParams,
+}: BoardPageProps) {
   const { boardId } = await params;
+  const { token = null } = await searchParams;
 
   const session = await auth.api.getSession({ headers: await headers() });
-  if (!session) notFound();
+  const userId = session?.user?.id ?? null;
 
-  const board = await prisma.board.findUnique({
-    where: { id: boardId, authorId: session?.user.id },
-  });
+  const role = await resolveRole(boardId, userId, token);
 
-  if (!board) notFound();
+  if (!role) {
+    if (!userId && token) {
+      redirect(`/login?next=/${boardId}?token=${token}`);
+    }
+    if (!userId) {
+      redirect(`/login?next=/${boardId}`);
+    }
+    notFound();
+  }
 
-  return <BoardCanvas boardId={boardId} />;
+  return (
+    <BoardCanvas
+      boardId={boardId}
+      role={role}
+      token={token}
+      isAuthenticated={!!userId}
+    />
+  );
 }

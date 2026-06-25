@@ -8,19 +8,24 @@ import {
 } from "@canvaso/shared-types";
 import { Prisma } from "@canvaso/database";
 import { NextRequest, NextResponse } from "next/server";
+import { resolveRole } from "@/lib/resolveRole";
 
 export async function GET(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: Promise<{ boardId: string }> },
 ) {
   const session = await auth.api.getSession({ headers: await headers() });
-  if (!session)
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
   const { boardId } = await params;
 
+  const token = req.nextUrl.searchParams.get("token");
+  const userId = session?.user?.id ?? null;
+
+  const role = await resolveRole(boardId, userId, token);
+  if (!role)
+    return NextResponse.json({ error: "Board not found" }, { status: 404 });
+
   const board = await prisma.board.findUnique({
-    where: { id: boardId, authorId: session.user.id },
+    where: { id: boardId },
     include: { elements: { where: { isDeleted: false } } },
   });
 
@@ -69,21 +74,31 @@ export async function GET(
     viewport: board.viewport,
     pageSize: board.pageSize,
     elements,
+    // Send role back so the client can set readonly mode
+    role,
   });
 }
+
+// ─── PUT ──────────────────────────────────────────────────────────────────────
+// Only owners and editors can save. Viewers are rejected.
 
 export async function PUT(
   req: NextRequest,
   { params }: { params: Promise<{ boardId: string }> },
 ) {
   const session = await auth.api.getSession({ headers: await headers() });
-  if (!session)
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { boardId } = await params;
+  const token = req.nextUrl.searchParams.get("token");
+
+  const role = await resolveRole(boardId, session?.user?.id ?? null, token);
+  if (!role)
+    return NextResponse.json({ error: "Board not found" }, { status: 404 });
+  if (role === "viewer")
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   const board = await prisma.board.findUnique({
-    where: { id: boardId, authorId: session.user.id },
+    where: { id: boardId },
     select: { id: true, projectId: true },
   });
   if (!board)
@@ -153,91 +168,100 @@ export async function PUT(
     return { base, props };
   }
 
-  await prisma.$transaction([
-    ...(deletedIds.length > 0
-      ? [
-          prisma.boardElement.updateMany({
-            where: { boardId, id: { in: deletedIds } },
-            data: { isDeleted: true },
-          }),
-        ]
-      : []),
+  await prisma.$transaction(
+    [
+      ...(deletedIds.length > 0
+        ? [
+            prisma.boardElement.updateMany({
+              where: { boardId, id: { in: deletedIds } },
+              data: { isDeleted: true },
+            }),
+          ]
+        : []),
 
-    ...validElements.map((el) => {
-      const { base, props } = splitElement(el);
-      return prisma.boardElement.upsert({
-        where: { id: el.id },
-        create: {
-          id: el.id,
-          boardId,
-          type: base.type as string,
-          x: base.x as number,
-          y: base.y as number,
-          width: base.width as number,
-          height: base.height as number,
-          angle: (base.angle as number) ?? 0,
-          opacity: (base.opacity as number) ?? 1,
-          strokeColor: base.strokeColor as string,
-          strokeWidth: (base.strokeWidth as number) ?? 2,
-          strokeStyle: (base.strokeStyle as string) ?? "solid",
-          fillColor: (base.fillColor as string) ?? "transparent",
-          strokeSharpness: (base.strokeSharpness as number) ?? 100,
-          isLocked: (base.isLocked as boolean) ?? false,
-          isHidden: (base.isHidden as boolean) ?? false,
-          boundElements: (base.boundElements as string[]) ?? [],
-          props,
-        },
-        update: {
-          x: base.x as number,
-          y: base.y as number,
-          width: base.width as number,
-          height: base.height as number,
-          angle: base.angle as number,
-          opacity: base.opacity as number,
-          strokeColor: base.strokeColor as string,
-          strokeWidth: base.strokeWidth as number,
-          strokeStyle: base.strokeStyle as string,
-          fillColor: base.fillColor as string,
-          strokeSharpness: base.strokeSharpness as number,
-          isLocked: base.isLocked as boolean,
-          isHidden: base.isHidden as boolean,
-          boundElements: base.boundElements as string[],
-          props,
-          isDeleted: false,
-        },
-      });
-    }),
+      ...validElements.map((el) => {
+        const { base, props } = splitElement(el);
+        return prisma.boardElement.upsert({
+          where: { id: el.id },
+          create: {
+            id: el.id,
+            boardId,
+            type: base.type as string,
+            x: base.x as number,
+            y: base.y as number,
+            width: base.width as number,
+            height: base.height as number,
+            angle: (base.angle as number) ?? 0,
+            opacity: (base.opacity as number) ?? 1,
+            strokeColor: base.strokeColor as string,
+            strokeWidth: (base.strokeWidth as number) ?? 2,
+            strokeStyle: (base.strokeStyle as string) ?? "solid",
+            fillColor: (base.fillColor as string) ?? "transparent",
+            strokeSharpness: (base.strokeSharpness as number) ?? 100,
+            isLocked: (base.isLocked as boolean) ?? false,
+            isHidden: (base.isHidden as boolean) ?? false,
+            boundElements: (base.boundElements as string[]) ?? [],
+            props,
+          },
+          update: {
+            x: base.x as number,
+            y: base.y as number,
+            width: base.width as number,
+            height: base.height as number,
+            angle: base.angle as number,
+            opacity: base.opacity as number,
+            strokeColor: base.strokeColor as string,
+            strokeWidth: base.strokeWidth as number,
+            strokeStyle: base.strokeStyle as string,
+            fillColor: base.fillColor as string,
+            strokeSharpness: base.strokeSharpness as number,
+            isLocked: base.isLocked as boolean,
+            isHidden: base.isHidden as boolean,
+            boundElements: base.boundElements as string[],
+            props,
+            isDeleted: false,
+          },
+        });
+      }),
 
-    prisma.board.update({
-      where: { id: boardId },
-      data: { viewport: viewportResult.data },
-    }),
+      prisma.board.update({
+        where: { id: boardId },
+        data: { viewport: viewportResult.data },
+      }),
 
-    ...(board.projectId
-      ? [
-          prisma.project.update({
-            where: { id: board.projectId },
-            data: { editedAt: new Date() },
-          }),
-        ]
-      : []),
-  ]);
+      ...(board.projectId
+        ? [
+            prisma.project.update({
+              where: { id: board.projectId },
+              data: { editedAt: new Date() },
+            }),
+          ]
+        : []),
+    ],
+    { timeout: 15000 },
+  );
 
   return NextResponse.json({ ok: true });
 }
+
+// ─── PATCH ────────────────────────────────────────────────────────────────────
+// Only the owner can rename/move a board.
 
 export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ boardId: string }> },
 ) {
   const session = await auth.api.getSession({ headers: await headers() });
-
   if (!session)
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { boardId } = await params;
-  const body = await req.json();
 
+  const role = await resolveRole(boardId, session.user.id, null);
+  if (role !== "owner")
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+
+  const body = await req.json();
   const data: Record<string, unknown> = {};
 
   if ("name" in body) {
@@ -251,21 +275,21 @@ export async function PATCH(
   }
 
   const oldBoard = await prisma.board.findUnique({
-    where: { id: boardId, authorId: session.user.id },
+    where: { id: boardId },
     select: { projectId: true },
   });
 
   const board = await prisma.board.update({
-    where: { id: boardId, authorId: session.user.id },
+    where: { id: boardId },
     data,
     select: { id: true, name: true, projectId: true },
   });
 
-  const projectToTouch = [oldBoard?.projectId, board.projectId].filter(
-    (id): id is string => !!id && id !== undefined,
-  );
-
-  const uniqueProjects = [...new Set(projectToTouch)];
+  const uniqueProjects = [
+    ...new Set(
+      [oldBoard?.projectId, board.projectId].filter((id): id is string => !!id),
+    ),
+  ];
 
   if (uniqueProjects.length > 0) {
     await prisma.project.updateMany({
@@ -277,6 +301,9 @@ export async function PATCH(
   return NextResponse.json({ board });
 }
 
+// ─── DELETE ───────────────────────────────────────────────────────────────────
+// Only the owner can delete a board.
+
 export async function DELETE(
   _req: NextRequest,
   { params }: { params: Promise<{ boardId: string }> },
@@ -287,14 +314,16 @@ export async function DELETE(
 
   const { boardId } = await params;
 
+  const role = await resolveRole(boardId, session.user.id, null);
+  if (role !== "owner")
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+
   const board = await prisma.board.findUnique({
-    where: { id: boardId, authorId: session.user.id },
+    where: { id: boardId },
     select: { projectId: true },
   });
 
-  await prisma.board.delete({
-    where: { id: boardId, authorId: session.user.id },
-  });
+  await prisma.board.delete({ where: { id: boardId } });
 
   if (board?.projectId) {
     await prisma.project.update({

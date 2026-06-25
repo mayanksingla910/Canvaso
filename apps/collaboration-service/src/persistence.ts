@@ -4,7 +4,7 @@ import { createClient, RedisClientType } from "redis";
 import { prisma } from "@canvaso/database";
 
 export const redis: RedisClientType = createClient({
-  url: env.REDIS_URL
+  url: env.REDIS_URL,
 });
 redis.on("error", (err) => console.error("Redis Client Error", err));
 

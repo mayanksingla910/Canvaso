@@ -1,13 +1,16 @@
-import React from "react";
 import Toolbar from "./toolbar";
 import ToolsSidebar from "./ToolsSidebar";
 import Canvas from "./canvas";
 
-function Board() {
+interface BoardProps {
+  readonly?: boolean;
+}
+
+function Board({ readonly = false }: BoardProps) {
   return (
     <div className="h-screen relative overflow-hidden">
-      <Toolbar />
-      <ToolsSidebar />
+      {!readonly && <Toolbar />}
+      {!readonly && <ToolsSidebar />}
       <Canvas />
     </div>
   );

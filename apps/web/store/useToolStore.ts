@@ -19,6 +19,9 @@ type toolStore = {
 
   defaultStyles: DefaultStyles;
   setDefaultStyle: (key: string, value: unknown) => void;
+
+  readonly: boolean;
+  setReadonly: (readonly: boolean) => void;
 };
 
 export const useToolStore = create<toolStore>()((set) => ({
@@ -27,6 +30,9 @@ export const useToolStore = create<toolStore>()((set) => ({
 
   openSidebar: true,
   setOpenSidebar: (open: boolean) => set({ openSidebar: open }),
+
+  readonly: false,
+  setReadonly: (readonly: boolean) => set({ readonly }),
 
   defaultStyles: {
     strokeColor: "var(--foreground)",

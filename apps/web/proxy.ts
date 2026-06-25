@@ -16,6 +16,11 @@ export function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
+  const isBoardPage = /^\/[^/]+$/.test(pathname) && !pathname.startsWith("/api");
+  if (isBoardPage) {
+    return NextResponse.next();
+  }
+
   if (!session) {
     return NextResponse.rewrite(new URL("/404", request.url));
   }
